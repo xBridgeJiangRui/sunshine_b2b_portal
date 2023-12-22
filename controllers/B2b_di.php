@@ -21,7 +21,7 @@ class b2b_di extends CI_Controller
 
     public function index()
     {
-        if($this->session->userdata('loginuser') == true && $this->session->userdata('userid') != '' && $_SESSION['user_logs'] == $this->panda->validate_login() && $_SESSION['user_group_name'] == 'SUPER_ADMIN')
+        if($this->session->userdata('loginuser') == true && $this->session->userdata('userid') != '' && $_SESSION['user_logs'] == $this->panda->validate_login())
         {   
             //print_r($_SESSION['from_other']); die;
             $setsession = array(
@@ -64,7 +64,7 @@ class b2b_di extends CI_Controller
 
     public function di_list()
     {
-        if ($this->session->userdata('loginuser') == true && $this->session->userdata('userid') != '' && $_SESSION['user_logs'] == $this->panda->validate_login() && $_SESSION['user_group_name'] == 'SUPER_ADMIN') {
+        if ($this->session->userdata('loginuser') == true && $this->session->userdata('userid') != '' && $_SESSION['user_logs'] == $this->panda->validate_login()) {
             $check_loc = $_SESSION['di_loc'];
             
             $hq_branch_code = $this->db->query("SELECT branch_code FROM acc_branch WHERE is_hq = '1'")->result();
@@ -119,7 +119,7 @@ class b2b_di extends CI_Controller
             if (in_array($_SESSION['di_loc'], $hq_branch_code_array)) {
                 $loc = $query_loc;
             } else {
-                $loc = "'" . $_SESSION['dii_loc'] . "'";
+                $loc = "'" . $_SESSION['di_loc'] . "'";
             }
 
             if (in_array('IAVA', $_SESSION['module_code'])) {
@@ -135,7 +135,7 @@ class b2b_di extends CI_Controller
             }
 
             if ($status == '') {
-                $status_in = " AND b.status = '' ";
+                $status_in = " AND a.status = '' ";
             } elseif ($status == 'ALL') {
                 $get_stat = $this->db->query("SELECT code from set_setting where module_name = 'PO_FILTER_STATUS'");
 
@@ -147,9 +147,9 @@ class b2b_di extends CI_Controller
                     $value = "'" . trim($value) . "'";
                 }
                 $check_status = implode(',', array_filter($check_stat));
-                $status_in = " AND b.status IN ($check_status) ";
+                $status_in = " AND a.status IN ($check_status) ";
             } else {
-                $status_in = " AND b.status = '$status' ";
+                $status_in = " AND a.status = '$status' ";
             }
 
             if ($datefrom == '' || $dateto == '') {
@@ -195,8 +195,8 @@ class b2b_di extends CI_Controller
             a.supplier_name,
             a.loc_group,
             a.docdate,
-            CAST(JSON_UNQUOTE(JSON_EXTRACT(a.`di_json_info`,'$.discheme_taxinv[0].datedue')) AS DATE)AS datedue,
-            ROUND(JSON_UNQUOTE(JSON_EXTRACT(a.`di_json_info`,'$.discheme_taxinv[0].total_net')), 2 )AS total_net,
+            a.datedue,
+            a.total_net,
             IF(a.status = '', 'NEW', a.status) AS status
             FROM
             b2b_summary.discheme_taxinv_info AS a
@@ -333,7 +333,6 @@ class b2b_di extends CI_Controller
     {
         $inv_refno = $_REQUEST['refno'];
         $url = $this->jasper_ip ."/jasperserver/rest_v2/reports/reports/PandaReports/Backend_DIncentives/display_incentive_report.pdf?refno=".$inv_refno; // DI
-        //print_r($url); die;
         
         $check_code = $this->db->query("SELECT a.supplier_code from b2b_summary.promo_taxinv_info a where a.inv_refno = '$refno' and a.customer_guid = '" . $_SESSION['customer_guid'] . "' ")->row('supplier_code');
 

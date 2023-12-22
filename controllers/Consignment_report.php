@@ -1574,6 +1574,13 @@ class Consignment_report extends CI_Controller
 
             $url = $jasper_url . "/jasperserver/rest_v2/reports/reports/B2BReports/$doc_template?db_be=$db&taxinv_guid=$refno";
             // echo $url;die;
+            // if($user_guid == '7BA14C79BDDB11EBB0C4000D3AA2838A')
+            // {            
+            //     // if special code need strreplace at line 3371
+            //     //$url = rawurlencode($url);
+            //     echo $url; die;
+            // }
+
             $auth = $this->file_config_b2b->auth($customer_guid, 'web', 'consignment', 'consignment_jasper_auth', 'CONJASPERAUTH');
             $curl = curl_init();
 
@@ -4160,7 +4167,7 @@ class Consignment_report extends CI_Controller
             // echo $db;die;
 
             $refno = $trans_guid;
-            $company_id = rawurlencode($company_id);
+            //$company_id = rawurlencode($company_id);
 
             $path_seperator = $this->file_config_b2b->path_seperator($customer_guid, 'web', 'general_doc', 'path_seperator', 'PS');
 
@@ -4169,12 +4176,12 @@ class Consignment_report extends CI_Controller
             $curl = curl_init();
 
             $url = $jasper_url . "/jasperserver/rest_v2/reports/reports/B2BReports/$doc_template?db_be=$db&trans_guid=$refno&supcode=$supcode&company_id=$company_id";
-            //echo $url;die;
+            // echo $url;die;
             // if($user_guid == '7BA14C79BDDB11EBB0C4000D3AA2838A')
             // {
             //     // if special code need strreplace at line 3371
-            //     //$url = str_replace("#",'%23',$url);
-            //     echo $refno; die;
+            //     //$url = rawurlencode($url);
+            //     echo $url; die;
             // }
             
             // https://jasper.xbridge.my:59090/jasperserver/rest_v2/reports/reports/B2BReports/Consignment_pur_inv_1.pdf?db_be=r_cks_backend&trans_guid=dev_test&supcode=AK02&company_id=199301015847

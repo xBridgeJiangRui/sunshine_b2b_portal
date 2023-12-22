@@ -342,6 +342,7 @@ class b2b_gr extends CI_Controller
             $from_module = $_SESSION['frommodule'];
             $this->panda->get_uri();
             $database_production = 'b2b_summary';
+            $database = 'lite_b2b';
 
             $grmain_status = $this->db->query("SELECT status from $database_production.grmain where refno = '$refno'")->row('status');
             if ($grmain_status != 'CONFIRM_EINV') {
@@ -455,7 +456,7 @@ class b2b_gr extends CI_Controller
                                 $gst_tax_amount = number_format($json['gst_tax_amount'], 4);
                                 $gst_unit_total = number_format((($json['TotalPrice'] - number_format($json['hcost_gr'], 2)) + $json['gst_tax_amount']), 2, '.', '' );
                             }
-
+                            
                             // $itemcode = $json['Itemcode'];
                             // $line = $json['Line'];
                             // $barcode = $json['barcode'];
@@ -508,16 +509,16 @@ class b2b_gr extends CI_Controller
                         $child_result_validation = '0';
                         $this->session->set_flashdata('message', 'Connection fail at customer server.Generation of E Invoice is currently not available. Please refresh this page.');
                     }
-
+                    
                     // jr comment it due to use gr json report query 2 when qty <> 0 - 10/05/2023
                     // $response = $get_header_detail->row('gr_json_report');
                     // $get_child_detail = json_decode($response, true)['query2'];
-
+    
                     // // $get_child_detail = json_decode(file_get_contents($to_shoot_url), true);
                     // // print_r($get_child_detail);die;
                     // $child_result_validation = $get_child_detail[0]['line'];
                     // // print_r($child_result_validation);die;
-
+    
                     // if ($child_result_validation == 'No Records Found') {
                     //     $get_child_detail = array();
                     //     $child_result_validation = '0';
@@ -527,6 +528,7 @@ class b2b_gr extends CI_Controller
                     //     $child_result_validation = $get_child_detail[0]['line'];
                     //     // print_r($child_result_validation);die;
                     // }
+                    
                 } else {
                     $get_child_detail = array();
                     $child_result_validation = '0';
@@ -727,13 +729,17 @@ class b2b_gr extends CI_Controller
                 $gr_back_date = $this->db->query("SELECT CURDATE() as curdate")->row('curdate');
             }
 
-            $check_inv_no = $get_header_detail->row('InvNo');
+            $check_inv_no = addslashes($get_header_detail->row('InvNo'));
             $check_code = $get_header_detail->row('supplier_code');
 
             $check_inv_no = $this->db->query("SELECT refno FROM b2b_summary.grmain_info WHERE customer_guid = '$customer_guid' AND invno = '$check_inv_no' AND `supplier_code` = '$check_code' ");
 
+            // $duplicate_refno = implode(",",array_filter(array_column($check_inv_no->result_array(),'refno')));
+            // $exisiting_refno = str_replace($refno,'',$duplicate_refno);
+            // $check_inv_no_refno = ($exisiting_refno[0] === ',') ? '' . substr($exisiting_refno, 1) : $exisiting_refno;
+
             if ($check_inv_no->num_rows() > 1) {
-                $this->session->set_flashdata('warning', 'Please check duplicate Supplier Invoice No.');
+                $this->session->set_flashdata('warning', 'Please check duplicate Supplier Invoice No');
             }
 
             $data = array(
@@ -1467,7 +1473,7 @@ class b2b_gr extends CI_Controller
             // echo $invoice_number;die;
             $gr_info = $this->db->query("SELECT 
             a.`loc_group` as Location
-            , a.`supplier_name` as Name
+            , a.`supplier_name`
             , a.`supplier_code` as Code
             , ifnull(b.invno,a.`Invno`) as Invno
             FROM b2b_summary.grmain_info AS a 
@@ -1828,7 +1834,7 @@ class b2b_gr extends CI_Controller
             $H_total_excl_tax = $grmain->row('total_include_tax');
             $H_tax_amount = $grmain->row('gst_tax_sum');
             $H_total_incl_tax = $grmain->row('total_include_tax');
-            $H_supplier_code = $grmain->row('Code');
+            $H_supplier_code = $grmain->row('supplier_code');
             $H_location = $grmain->row('loc_group');
 
             ##check b2b invno

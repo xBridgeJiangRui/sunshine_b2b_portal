@@ -151,10 +151,11 @@ class E_document extends CI_Controller
             }
         }
 
-        $get_header_detail = $this->db->query("SELECT a.`customer_guid`, IF(b.InvNo IS NULL, a.`InvNo`, b.InvNo) AS InvNo,a.`supplier_code` AS `Code` FROM $database2.grmain_info AS a LEFT JOIN $database2.grmain_proposed AS b ON a.refno = b.refno AND a.customer_guid = b.customer_guid where a.refno = '$e_gr_refno' and a.customer_guid = '$customer_guid'");
+        $get_header_detail = $this->db->query("SELECT a.`customer_guid`, IF(b.InvNo IS NULL, a.`InvNo`, b.InvNo) AS InvNo,a.`supplier_code` AS `Code`,a.loc_group AS `location` FROM $database2.grmain_info AS a LEFT JOIN $database2.grmain_proposed AS b ON a.refno = b.refno AND a.customer_guid = b.customer_guid where a.refno = '$e_gr_refno' and a.customer_guid = '$customer_guid'");
 
         $einv_no_data = $get_header_detail->row('InvNo');
         $einv_code = $get_header_detail->row('Code'); 
+        $einv_location = $get_header_detail->row('location'); 
 
         if(strlen($einv_no_data) > '30')
         {
@@ -171,16 +172,18 @@ class E_document extends CI_Controller
         if($check_inv_status == 'Yes')
         {
             $store_refno = '';
-            $public_ip_check = $this->db->query("SELECT public_ip from lite_b2b.acc where acc_guid = '$customer_guid'")->row('public_ip');
-            // $check_url = "http://202.75.55.22/rest_api/index.php/return_json";
-            $to_check_duplicate = $public_ip_check . "/rest_api/index.php/panda2finance/check_duplicate";
+            $url = $this->internal_ip;
+
+            $to_check_duplicate = $url."/rest_b2b/index.php/E_invoice_validate/grn_einv_checking";
             //echo $to_check_duplicate ;die;
 
             $data_check_einv = array(
+                "customer_guid" => $customer_guid,
                 "refno" => $e_gr_refno,
                 "doctype"  => 'GRN',
                 "code"  => $einv_code,
                 "invno"  => $einv_no_data,
+                "loc_group" => $einv_location,
             );
             //print_r(json_encode($data_check_einv)); die;
 
@@ -217,7 +220,7 @@ class E_document extends CI_Controller
                     }
                     $store_refno = rtrim($store_refno, ',');
                     $error = 99;
-                    $add_msg = 'Duplicate Inv Number ' . $store_refno;
+                    $add_msg = $output->message. ' ' . $store_refno;
                 }
             }
             else

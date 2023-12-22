@@ -1338,6 +1338,7 @@ class general extends CI_Controller
             $reason  = $this->input->post('reason');
             $datetimenow = $this->db->query("SELECT now() as now")->row('now');
             $b2b_database = 'b2b_summary';
+            $user_id = $this->session->userdata('userid');
 
             $reject_reason = $this->db->query("SELECT * FROM status_setting WHERE type = 'reject_po' AND code = '$reason'");
             $email_reject_reason = $reject_reason->row('portal_description');
@@ -1401,6 +1402,7 @@ class general extends CI_Controller
                 , now()
                 ");
             unset($_SESSION['from_other']);
+            // set session for required setting
 
             $get_header = $this->db->query("SELECT a.value AS body_header FROM lite_b2b.config a WHERE a.type = 'header_val' AND a.module = 'email_temp' AND a.device = 'web' AND a.code = 'EHTMP' LIMIT 1")->row('body_header');
                 
@@ -2611,7 +2613,11 @@ class general extends CI_Controller
                 $url = $this->jasper_ip . "/jasperserver/rest_v2/reports/reports/PandaReports/Backend_PDN_PCN/main_jrxml.pdf?refno=".$row;
                 $frommodule = 'b2b_pdncn';
             } else if ($type == 'PCI') {
+                $url = $this->jasper_ip ."/jasperserver/rest_v2/reports/reports/PandaReports/Backend_Promotion/promo_claim_inv.pdf?refno=".$row; // PCI
+                $frommodule = 'b2b_pci';
             } else if ($type == 'DI') {
+                $url = $this->jasper_ip ."/jasperserver/rest_v2/reports/reports/PandaReports/Backend_DIncentives/display_incentive_report.pdf?refno=".$row;
+                $frommodule = 'b2b_di';
             } else if ($type == 'SI') {
             }
 

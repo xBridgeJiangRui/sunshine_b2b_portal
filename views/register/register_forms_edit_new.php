@@ -788,11 +788,16 @@ input:focus {
                   {
                     $item = $this->db->query("SELECT * FROM lite_b2b.set_supplier_group WHERE supplier_group_name = '$items' AND customer_guid = '$customer_guid' AND supplier_guid = '$supplier_guid' ");
 
-                    if($item->num_rows() > 0 ) {
-                     echo "<div id='acno1' >Mapped</div>"; 
+                    $supcus_vendor_code = $this->db->query("SELECT `code`,IF(b2b_registration = '1', 'Supcus B2B Flag', 'Supcus No B2B Flag') AS b2b_flag, IF(b2b_registration = '1', '#3afa14', '#ff738c') AS b2b_flag_color FROM b2b_summary.supcus WHERE `code` = '$items' AND customer_guid = '$customer_guid' ");
+
+                    if($item->num_rows() > 0 ) 
+                    {
+                      echo "<div id='acno1' > <span style='background-color:#3afa14;font-weight:bold;'> Mapped</span> - <span style='background-color:".$supcus_vendor_code->row('b2b_flag_color').";font-weight:bold;'>".$supcus_vendor_code->row('b2b_flag')." ( ".$supcus_vendor_code->num_rows()." Record ) </span> </div>"; 
                     }
                     else 
-                    echo "<div id='acno1' > Not Map</div>"; 
+                    {
+                      echo "<div id='acno1' > <span style='background-color:#ff738c;font-weight:bold;'> Not Map</span> - <span style='background-color:".$supcus_vendor_code->row('b2b_flag_color').";font-weight:bold;'>".$supcus_vendor_code->row('b2b_flag')." ( ".$supcus_vendor_code->num_rows()." Record )  </span> </div>"; 
+                    }
                   }
                   ?>
                 <?php

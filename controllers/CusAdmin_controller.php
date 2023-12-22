@@ -112,6 +112,7 @@ class CusAdmin_controller extends CI_Controller {
                 $data = array(
                 'title' => $this->input->post('title'),
                 'docdate' => $this->input->post('docdate'),
+                'duedate' => $this->input->post('selected_due_date'),
                 'content' => $content_get,
                 'acknowledgement' => $this->input->post('acknowledgement'),
                 'pdf_status' => $this->input->post('pdfstatus'),
@@ -297,8 +298,8 @@ class CusAdmin_controller extends CI_Controller {
                             4 =>'name',
                             5 =>'sup_name',
                             6 =>'reg_no',
-                            7 =>'block',
-                            8 => 'remark1',
+                            7 => 'supply_type',
+                            8 =>'block',
                             9 => 'PIC',
                             10 =>'invoice_no',
                             // 11 =>'training_pax',
@@ -308,7 +309,7 @@ class CusAdmin_controller extends CI_Controller {
                             // 15 => 'ACCEPT_FORM',
                             // 16 => 'REG_FORM',
                             // 17 => 'customer_guid',
-                            12 => 'supply_type',
+                            12 => 'remark1',
                         );   
 
             /*//debug mode
@@ -338,7 +339,7 @@ class CusAdmin_controller extends CI_Controller {
                 $posts =  $this->General_model->posts_supchecklist_search($limit,$start,$customer_guid,$dir,$order,$search );
                 $totalFiltered =   $totalData; 
             }
-            //echo $this->db->last_query(); die;
+             
             $data = array();
             if(!empty($posts))
             {
@@ -442,7 +443,6 @@ class CusAdmin_controller extends CI_Controller {
 
 
 
- 
                           ";
                           //<a href='".$url."?supcus_guid=$supcus&customer_guid=$customer_guid' $color ><i $folder></i> Folder</a>
                     $nestedData['type'] = $post->type;                          
@@ -1268,15 +1268,30 @@ class CusAdmin_controller extends CI_Controller {
         }
     }
 
+    public function manual_guide_setup_log($process, $controller, $remark, $action)
+    {
+        $data = array(
+            'guid' => $this->db->query("SELECT UPPER(REPLACE(UUID(),'-','')) as guid")->row('guid'),
+            'process' => $process,
+            'user_id' => $this->session->userdata('userid'),
+            'controller' => $controller,
+            'remark' => $remark,
+            'action' => $action,
+            'date_added' => $this->db->query("SELECT NOW() as now")->row('now'),
+        );
+
+        $this->db->insert('lite_b2b.manual_guide_log', $data);
+    }
+
     public function faq_manual_guide_setup()
     {
         if($this->session->userdata('loginuser') == true && $this->session->userdata('userid') != '')
         {   
-            $file_config_main_path = $this->file_config_b2b->file_path_name($this->session->userdata('customer_guid'),'web','manual_guide','main_path','MNLG');
             $data = array(
-                'customer' => $this->db->query("SELECT * FROM lite_b2b.acc ORDER BY acc_name ASC"),
-                'manual_guide' => $this->db->query("SELECT a.*,b.acc_name FROM lite_b2b.manual_guide a INNER JOIN lite_b2b.acc b ON a.customer_guid = b.acc_guid"),
-                'faq' => $this->db->query("SELECT * FROM lite_b2b.faq"),
+                'customer'          => $this->db->query("SELECT * FROM lite_b2b.acc ORDER BY acc_name ASC"),
+                'manual_guide'      => $this->db->query("SELECT * FROM lite_b2b.mc_guide"),
+                'language_list'     => $this->db->query("SELECT lang_type FROM lite_b2b.mc_guide GROUP BY lang_type"),
+                'faq'               => $this->db->query("SELECT * FROM lite_b2b.faq"),
             );
             $this->load->view('header');
             $this->load->view('cusadmin/cusadmin_faq_manual_guide_setup', $data); 
@@ -1288,63 +1303,177 @@ class CusAdmin_controller extends CI_Controller {
         }
     }
 
-    public function manual_guide_setup_add()
+    public function manual_guide_setup_mapping()
     {
+        $guide_guid = $this->input->post('guide_guid');
+        $html = '';
 
-        $active = $this->input->post('active');
-        if ($active != '1') {
-            $active = '0';
-        }
-        $title = $this->input->post('title');
-        $description = $this->input->post('description');
-        $seq = $this->input->post('seq');
-        $customer_guid = $this->input->post('customer_guid');
-        $lang_type = $this->input->post('lang_type');
-        $guid = $this->db->query("SELECT UPPER(REPLACE(UUID(),'-','')) as guid")->row('guid');
-        $now =  $this->db->query("SELECT NOW() as now")->row('now');
-        $file_path = $this->db->query("SELECT * FROM lite_b2b.acc WHERE acc_guid = '$customer_guid'");
-        $path = $file_path->row('file_path');
-        $file_config_main_path = $this->file_config_b2b->file_path_name($customer_guid,'web','manual_guide','main_path','MNLG');
-        //print_r($path); die;
-        //button type submit name have to be submit to go in this if condition
-        if(isset($_POST['submit'])){
-     
-                // Count total files
-                $countfiles = count($_FILES['file']['name']);
+        $customer = $this->db->query("SELECT * FROM lite_b2b.acc ORDER BY acc_name ASC")->result_array();
+        $selected_customer = $this->db->query("SELECT customer_guid FROM lite_b2b.mc_guide_c WHERE guide_guid = '$guide_guid'")->result_array();
 
-                // Looping all files
-                for($i=0;$i<$countfiles;$i++){
+        foreach($customer as $row)
+        {
+            $checked = '';
 
-                    if ($_FILES['file']['name'][0] != "") {
-
-                        $filename = $_FILES['file']['name'][$i];
-                        /*echo $_SERVER['SERVER_NAME'];die;*/
-                        /*$path = base_url('asset/manual_guide/').$filename;*/
-                        $path = $file_config_main_path.$path.'/'.$filename;
-                       
-                            // Upload file
-                        move_uploaded_file($_FILES['file']['tmp_name'][$i],$path);
-
-                    }
-                    
+            foreach($selected_customer as $data){
+                if($row['acc_guid'] == $data['customer_guid']){
+                    $checked = 'checked';
                 }
             }
 
-        $data = array(
-        'customer_guid' => $customer_guid,
-        'manual_guid' => $guid,
-        'active' => $active,
-        'title' => $title,
-        'description' => $description,
-        'file_name' => $filename,
-        'lang_type' => $lang_type,
-        'seq' => $seq,
-        'created_at' => $now,
-        'created_by' => $_SESSION['userid'],
-        
+            $html .= '<input type="checkbox" class="retailer_checkbox" name ="retailer[]" value="'.$row['acc_guid'].'" '.$checked.'>';
+            $html .= '<label for="'.$row['acc_name'].'">'.$row['acc_name'].'</label><br>';
+        }
+
+        echo $html;
+    }
+
+    public function manual_guide_setup_mapping_by_retailer()
+    {
+        $retailer = $this->input->post('retailer');
+
+        $language_list = $this->db->query("SELECT lang_type FROM lite_b2b.mc_guide GROUP BY lang_type")->result_array();
+
+        $html = '<br>';
+        $html .= '<label style="padding-right: 20px">Manual Guide</label>';
+        $html .= '<span>';
+        $html .= '<a style="cursor: pointer;" onclick="selectAllGuideCheckboxes()">Select All</a>'; 
+        $html .= '/';
+        $html .= '<a style="cursor: pointer;" onclick="unselectAllGuideCheckboxes()">Unselect All</a>';
+        $html .= '</span>';
+
+        foreach($language_list as $lang)
+        {   
+            $language = $lang['lang_type'];
+            $class = $language.'_div';
+
+            $html .= '<div class="'.$class.' language_div" style="height: 180px; overflow-y: auto; border: 1px solid #ccc; background-color: #f5f5f5; padding: 10px;">';
+
+            $guide_list = $this->db->query("SELECT * FROM lite_b2b.mc_guide WHERE lang_type = '$language' ORDER BY seq ASC")->result_array();
+            $selected_guide = $this->db->query("SELECT mg.guide_guid, mg.title, mg.description, mg.file_name FROM lite_b2b.mc_guide mg INNER JOIN mc_guide_c mgc ON mg.guide_guid = mgc.guide_guid WHERE mgc.customer_guid = '$retailer' AND mg.lang_type = '$language' ORDER BY mg.seq ASC")->result_array();
+
+            foreach($guide_list as $row)
+            {
+                $checked = '';
+
+                foreach($selected_guide as $data){
+                    if($row['guide_guid'] == $data['guide_guid']){
+                        $checked = 'checked';
+                    }
+                }
+
+                $html .= '<input type="checkbox" class="'.$language.'_manual_guide_checkbox" name ="selected_guide[]" value="'.$row['guide_guid'].'" '.$checked.'>';
+                $html .= '<label for="'.$row['title'].'">'.$row['title'].'</label><br>';
+            }
+
+            $html .= '</div>';
+        }
+
+        echo $html;
+    }
+
+    public function manual_guide_mapping_to_retailer()
+    {   
+        $retailer = $this->input->post('selected_retailer');
+        $selected_guide = $this->input->post('selected_guide');
+
+        $acc_name = $this->db->query("SELECT acc_name FROM lite_b2b.acc WHERE acc_guid = '$retailer'")->row('acc_name');
+
+        $guide_details_before = $this->db->query("SELECT mg.`title` FROM lite_b2b.mc_guide_c mgc INNER JOIN lite_b2b.mc_guide mg ON mgc.`guide_guid` = mg.`guide_guid` WHERE mgc.customer_guid = '$retailer'")->result_array();
+        $guide_list_before = array();
+
+        foreach($guide_details_before as $guide){
+            $guide_list_before[] = $guide['title'];
+        }
+
+        $child_data = array();
+
+        foreach($selected_guide as $row){
+
+            $child_data[] = array(
+                'guide_c_guid' => $this->db->query("SELECT UPPER(REPLACE(UUID(),'-','')) as guid")->row('guid'),
+                'guide_guid' => $row,
+                'customer_guid' => $retailer,
+                'created_at' => $this->db->query("SELECT NOW() as now")->row('now'),
+                'created_by' => $_SESSION['userid'],
+            );
+    
+        }
+
+        $this->db->query("DELETE FROM lite_b2b.mc_guide_c WHERE customer_guid = '$retailer'");
+
+        if(sizeof($child_data) > 0){
+            $this->db->insert_batch('lite_b2b.mc_guide_c', $child_data);
+        }
+
+        $guide_details_after = $this->db->query("SELECT mg.`title` FROM lite_b2b.mc_guide_c mgc INNER JOIN lite_b2b.mc_guide mg ON mgc.`guide_guid` = mg.`guide_guid` WHERE mgc.customer_guid = '$retailer'")->result_array();
+        $guide_list_after = array();
+
+        foreach($guide_details_after as $guide){
+            $guide_list_after[] = $guide['title'];
+        }
+
+        $log_data = array(
+            'retailer'      => $acc_name,
+            'before_update' => $guide_list_before,
+            'after_update'  => $guide_list_after,
         );
 
-        $this->db->insert('lite_b2b.manual_guide', $data);
+        $this->manual_guide_setup_log('Assign Manual Guide to Retailer', site_url('CusAdmin_controller/manual_guide_setup_edit'), json_encode($log_data), 'UPDATE');
+
+        echo "<script> alert('Successfully Edit');</script>";
+        echo "<script> document.location='" . base_url() . "index.php/CusAdmin_controller/faq_manual_guide_setup' </script>";
+
+    }
+
+    public function manual_guide_setup_add()
+    {
+        $active = (isset($_POST['active'])) ? $this->input->post('active') : 0;
+        $title = $this->input->post('title');
+        $description = $this->input->post('description');
+        $seq = $this->input->post('seq');
+        $lang_type = $this->input->post('lang_type');
+        $guide_guid = $this->db->query("SELECT UPPER(REPLACE(UUID(),'-','')) as guid")->row('guid');
+
+        $file_config_main_path = $this->file_config_b2b->file_path_name($this->session->userdata('customer_guid'),'web','manual_guide','main_path','MNLG');
+
+        if(isset($_POST['submit'])){
+
+            $countfiles = count($_FILES['file']['name']);
+            
+            for($i=0;$i<$countfiles;$i++){
+
+                if ($_FILES['file']['name'][0] != "") {
+
+                    $filename = $_FILES['file']['name'][$i];
+                    $path = $file_config_main_path.'/'.$filename;
+                       
+                    move_uploaded_file($_FILES['file']['tmp_name'][$i],$path);
+                }      
+            }
+        }
+
+        $data = array(
+            'guide_guid' => $guide_guid,
+            'active' => $active,
+            'title' => $title,
+            'description' => $description,
+            'file_name' => $filename,
+            'lang_type' => $lang_type,
+            'seq' => $seq,
+            'created_at' => $this->db->query("SELECT NOW() as now")->row('now'),
+            'created_by' => $_SESSION['userid'],
+        );
+
+        $this->db->insert('lite_b2b.mc_guide', $data);
+
+        $guide_detail = $this->db->query("SELECT * FROM lite_b2b.mc_guide WHERE guide_guid = '$guide_guid'")->result_array();
+
+        $log_data = array(
+            'guide_details' => $guide_detail,
+        );
+
+        $this->manual_guide_setup_log('Add Manual Guide', site_url('CusAdmin_controller/manual_guide_setup_add'), json_encode($log_data), 'INSERT');
 
         echo "<script> alert('Successfully Created');</script>";
         echo "<script> document.location='" . base_url() . "index.php/CusAdmin_controller/faq_manual_guide_setup' </script>";
@@ -1355,85 +1484,111 @@ class CusAdmin_controller extends CI_Controller {
 
     public function manual_guide_setup_edit()
     {
-        $manual_guid = $this->input->post('manual_guid');
-        $active = $this->input->post('active');
-        if ($active != '1') {
-            $active = '0';
-        }
+        $guide_guid = $this->input->post('guide_guid');
+        $selected_retailer = $this->input->post('retailer');
+        $active = (isset($_POST['active'])) ? $this->input->post('active') : 0;
         $title = $this->input->post('title');
         $description = $this->input->post('description');
         $lang_type = $this->input->post('lang_type');
         $seq = $this->input->post('seq');
         $old_file_name = $this->input->post('file_name');
-        $old_customer_guid = $this->input->post('old_customer_guid');
-        $customer_guid = $this->input->post('customer_guid');
-        $now =  $this->db->query("SELECT NOW() as now")->row('now');
-        // echo $old_file_name;die;
-        $old_file_path = $this->db->query("SELECT * FROM lite_b2b.acc WHERE acc_guid = '$old_customer_guid'");
-        $old_path = $old_file_path->row('file_path');
 
-        $file_config_main_path = $this->file_config_b2b->file_path_name($customer_guid,'web','manual_guide','main_path','MNLG');
+        $file_config_main_path = $this->file_config_b2b->file_path_name($this->session->userdata('customer_guid'),'web','manual_guide','main_path','MNLG');
 
-        $old_file_path = $file_config_main_path.$old_path.'/'.$old_file_name;
+        $old_file_path = $file_config_main_path.'/'.$old_file_name;
 
-        $file_path = $this->db->query("SELECT * FROM lite_b2b.acc WHERE acc_guid = '$customer_guid'");
-        $path = $file_path->row('file_path');
-
-        //button type submit name have to be submit to go in this if condition
         if(isset($_POST['submit'])){
-     
-                // Count total files
-                $countfiles = count($_FILES['file']['name']);
 
-                // Looping all files
-                for($i=0;$i<$countfiles;$i++){
-                    if ($_FILES['file']['name'][0] != "") {
+            $countfiles = count($_FILES['file']['name']);
 
+            for($i=0;$i<$countfiles;$i++){
+                if ($_FILES['file']['name'][0] != "") {
 
-                        if ($old_file_name != '') {
-                            unlink($old_file_path);
-                        }
-
-                        $filename = $title.'_'.$_FILES['file']['name'][$i];
-                        /*echo $_SERVER['SERVER_NAME'];die;*/
-                        /*$path = base_url('asset/manual_guide/').$filename;*/
-                        /*$path = '../lite_panda_b2b/asset/manual_guide/'.$filename;*/
-                        $path = $file_config_main_path.$path.'/'.$filename;
-
-                            // Upload file
-                        move_uploaded_file($_FILES['file']['tmp_name'][$i],$path);
-
+                    if ($old_file_name != '') {
+                        unlink($old_file_path);
                     }
 
-                    else {
-                        $path = $file_config_main_path.$path.'/'.$old_file_name;
-                        // echo base_url().$old_file_path.'<br>'.$path;die;
-                        rename($old_file_path,$path);
+                    $filename = $title.'_'.$_FILES['file']['name'][$i];
+                    $path = $file_config_main_path.'/'.$filename;
 
-                        $filename = $old_file_name;
+                    move_uploaded_file($_FILES['file']['tmp_name'][$i],$path);
 
-                    }
-                    
+                } else {
+                    $path = $file_config_main_path.$path.'/'.$old_file_name;
+                    rename($old_file_path,$path);
+
+                    $filename = $old_file_name;
+
                 }
+                    
             }
+        }
+
+        $guide_detail_before = $this->db->query("SELECT * FROM lite_b2b.mc_guide WHERE guide_guid = '$guide_guid'")->result_array();
+        $customer_mapping_before = $this->db->query("SELECT a.`acc_name` FROM lite_b2b.mc_guide_c mgc INNER JOIN lite_b2b.acc a ON mgc.`customer_guid` = a.`acc_guid` WHERE guide_guid = '$guide_guid'")->result_array();
+        $customer_before = array();
+
+        foreach($customer_mapping_before as $customer){
+            $customer_before[] = $customer['acc_name'];
+        }
+
+        $child_data = array();
+
+        foreach($selected_retailer as $row){
+
+            $child_data[] = array(
+                'guide_c_guid' => $this->db->query("SELECT UPPER(REPLACE(UUID(),'-','')) as guid")->row('guid'),
+                'guide_guid' => $guide_guid,
+                'customer_guid' => $row,
+                'created_at' => $this->db->query("SELECT NOW() as now")->row('now'),
+                'created_by' => $_SESSION['userid'],
+            );
+    
+        }
+
+        $this->db->query("DELETE FROM lite_b2b.mc_guide_c WHERE guide_guid = '$guide_guid'");
+
+        if(sizeof($child_data) > 0){
+            $this->db->insert_batch('lite_b2b.mc_guide_c', $child_data);
+        }
 
         $data = array(
-        'customer_guid' => $customer_guid,
-        'active' => $active,
-        'title' => $title,
-        'description' => $description,
-        'file_name' => $filename,
-        'lang_type' => $lang_type,
-        'seq' => $seq,
-        'updated_at' => $now,
-        'updated_by' => $_SESSION['userid'],
-        
+            'active' => $active,
+            'title' => $title,
+            'description' => $description,
+            'file_name' => $filename,
+            'lang_type' => $lang_type,
+            'seq' => $seq,
+            'updated_by' => $_SESSION['userid'],
         );
 
-        $this->db->where('customer_guid', $old_customer_guid);
-        $this->db->where('manual_guid', $manual_guid);
-        $this->db->update('lite_b2b.manual_guide', $data);
-        // echo $this->db->last_query();die;
+        $this->db->where('guide_guid', $guide_guid);
+        $this->db->update('lite_b2b.mc_guide', $data);
+
+        $guide_detail_after = $this->db->query("SELECT * FROM lite_b2b.mc_guide WHERE guide_guid = '$guide_guid'")->result_array();
+        $customer_mapping_after = $this->db->query("SELECT a.`acc_name` FROM lite_b2b.mc_guide_c mgc INNER JOIN lite_b2b.acc a ON mgc.`customer_guid` = a.`acc_guid` WHERE guide_guid = '$guide_guid'")->result_array();
+        $customer_after = array();
+
+        foreach($customer_mapping_after as $customer){
+            $customer_after[] = $customer['acc_name'];
+        }
+
+        $before_update = array(
+            'guide_details' => $guide_detail_before,
+            'retailer'      => $customer_before
+        );
+
+        $after_update = array(
+            'guide_details' => $guide_detail_after,
+            'retailer'      => $customer_after
+        );
+
+        $log_data = array(
+            'before_update' => $before_update,
+            'after_update'  => $after_update,
+        );
+
+        $this->manual_guide_setup_log('Edit Manual Guide', site_url('CusAdmin_controller/manual_guide_setup_edit'), json_encode($log_data), 'UPDATE');
 
         echo "<script> alert('Successfully Edit');</script>";
         echo "<script> document.location='" . base_url() . "index.php/CusAdmin_controller/faq_manual_guide_setup' </script>";
@@ -1442,23 +1597,38 @@ class CusAdmin_controller extends CI_Controller {
 
     }
 
-        public function manual_guide_setup_delete()
+    public function manual_guide_setup_delete()
     {
-        $manual_guid = $this->input->post('manual_guid');
+        $manual_guid = $this->input->post('guide_guid');
         $file_name = $this->input->post('file_name');
-        $customer_guid = $this->input->post('customer_guid');
-        $file_path = $this->db->query("SELECT * FROM lite_b2b.acc WHERE acc_guid = '$customer_guid'");
-        $path = $file_path->row('file_path');
-        $file_config_main_path = $this->file_config_b2b->file_path_name($customer_guid,'web','manual_guide','main_path','MNLG');
-        $file_path1 =  $file_config_main_path.$path.'/'.$file_name;
+        $file_config_main_path = $this->file_config_b2b->file_path_name($this->session->userdata('customer_guid'),'web','manual_guide','main_path','MNLG');
+        $file_path1 =  $file_config_main_path.'/'.$file_name;
 
         unlink($file_path1);
 
-        $this->db->where('manual_guid', $manual_guid);
-        $this->db->where('customer_guid', $customer_guid);
-        $this->db->delete('lite_b2b.manual_guide');
+        // print_r($_POST); die;
 
-        // echo $this->db->last_query();die;
+        $guide_detail = $this->db->query("SELECT * FROM lite_b2b.mc_guide WHERE guide_guid = '$manual_guid'")->result_array();
+        $customer_mapping = $this->db->query("SELECT a.`acc_name` FROM lite_b2b.mc_guide_c mgc INNER JOIN lite_b2b.acc a ON mgc.`customer_guid` = a.`acc_guid` WHERE guide_guid = '$manual_guid'")->result_array();
+        $customer = array();
+
+        foreach($customer_mapping as $row){
+            $customer[] = $row['acc_name'];
+        }
+
+        $info = array(
+            'guide_details' => $guide_detail,
+            'retailer'      => $customer
+        );
+
+        $log_data = array(
+            'info' => $info,
+        );
+
+        $this->db->query("DELETE FROM lite_b2b.mc_guide_c WHERE guide_guid = '$manual_guid'");
+        $this->db->query("DELETE FROM lite_b2b.mc_guide WHERE guide_guid = '$manual_guid'");
+
+        $this->manual_guide_setup_log('Delete Manual Guide', site_url('CusAdmin_controller/manual_guide_setup_delete'), json_encode($log_data), 'DELETE');
 
         echo "<script> alert('Successfully Delete');</script>";
         echo "<script> document.location='" . base_url() . "index.php/CusAdmin_controller/faq_manual_guide_setup' </script>";

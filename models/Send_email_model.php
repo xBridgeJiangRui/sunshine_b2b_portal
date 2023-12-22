@@ -215,7 +215,7 @@ class Send_email_model extends CI_Model
         } else {
             $b64Doc = '';
         }
-  
+
       $attachment = array('ContentType' => 'application/pdf', 'Filename' => $filename, 'Base64Content' => $b64Doc);
       $attachment1 = array($attachment);
       $attachment_array = array($attachment);

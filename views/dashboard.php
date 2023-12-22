@@ -344,7 +344,7 @@
           
       </div>
     </div>
-  </div>  
+  </div>
 
   <div class="row">
     <div class="col-md-12">
@@ -626,9 +626,9 @@ var mandatory = "<?php echo $row->mandatory;?>";
 
 var WEEKS = [
 
-  <?php for ($i = 7; $i >= 1; $i--) {
-    $weeks = date("Y-m-d", strtotime( date('Y-m-d h:i:s')." -$i days"));
-    echo " ' ".$weeks." ' ,";
+<?php for ($i = 7; $i >= 1; $i--) {
+  $weeks = date("Y-m-d", strtotime( date('Y-m-d h:i:s')." -$i days"));
+  echo " ' ".$weeks." ' ,";
 } ?>
 
 ];

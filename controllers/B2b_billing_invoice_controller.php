@@ -33,13 +33,15 @@ class b2b_billing_invoice_controller extends CI_Controller {
             $defined_path = $file_config_main_path.$path;
             $manual_guide = $this->db->query("SELECT title,file_name FROM lite_b2b.manual_guide WHERE active = '1' AND lang_type = 'EN' AND title = 'Upload Payment Remitttance' LIMIT 1");
 
-            if ( $_SESSION['user_group_name'] == 'SUPER_ADMIN') {
+            if ( $_SESSION['user_group_name'] == 'SUPER_ADMIN' || $_SESSION['user_group_name'] == 'CUSTOMER_ADMIN_FINANCE') {
                 $get_customer = $this->db->query("SELECT acc_guid, acc_name,seq 
                 FROM `acc` WHERE isactive = 1 order by seq asc,row_seq ASC");
 
                 $get_supplier_name_list = $this->db->query("SELECT a.supplier_guid, b.`supplier_name` FROM lite_b2b.set_supplier_user_relationship a INNER JOIN lite_b2b.`set_supplier` b ON a.`supplier_guid` = b.`supplier_guid` GROUP BY a.supplier_guid ORDER BY b.supplier_name ASC ");
 
-                $get_period_code = $this->db->query("SELECT a.* FROM ( SELECT period_code FROM b2b_invoice.supplier_monthly_main GROUP BY period_code UNION ALL SELECT period_code FROM b2b_invoice.inv_doc GROUP BY period_code ) a GROUP BY period_code ORDER BY period_code DESC ");
+                $get_period_code = $this->db->query("SELECT a.* FROM ( SELECT period_code FROM b2b_invoice.supplier_monthly_main GROUP BY period_code ) a GROUP BY period_code ORDER BY period_code DESC ");
+
+                // $get_period_code = $this->db->query("SELECT a.* FROM ( SELECT period_code FROM b2b_invoice.supplier_monthly_main GROUP BY period_code UNION ALL SELECT period_code FROM b2b_invoice.inv_doc GROUP BY period_code ) a GROUP BY period_code ORDER BY period_code DESC ");
 
                 $data = array(
                     'customer' => $get_customer,
@@ -122,14 +124,10 @@ class b2b_billing_invoice_controller extends CI_Controller {
         $valid_columns = array(
             0=>'name',
             1=>'invoice_number',
-            2=>'period_code',
-            3=>'total_include_tax',
-            4=>'inv_status',
+            2=>'invoice_date',
+            3=>'cn_inv_no',
+            4=>'total_include_tax',
             5=>'created_at',
-            6=>'variance_status',
-            7=>'file_status',
-            8=>'sorting_two',
-            9=>'sorting',
         );
 
         if(!isset($valid_columns[$col]))
@@ -189,12 +187,12 @@ class b2b_billing_invoice_controller extends CI_Controller {
 
         // if($user_guid == '7BA14C79BDDB11EBB0C4000D3AA2838A')
         // {
-        //     $user_guid = 'B70C22DEA8C511EBA678000D3AA2838A';
+        //     $user_guid = 'E9E3C7AAAB4811ED8D8C000D3AA232B1';
         // }
 
-        if ($_SESSION['user_group_name'] == "SUPER_ADMIN" || $_SESSION['user_group_name'] == 'CUSTOMER_ADMIN_TESTING_USE' ) {
+        if ($_SESSION['user_group_name'] == "SUPER_ADMIN" || $_SESSION['user_group_name'] == 'CUSTOMER_ADMIN_TESTING_USE' || $_SESSION['user_group_name'] == 'CUSTOMER_ADMIN_FINANCE') {
             
-            $sql = "SELECT * FROM (SELECT a.`inv_guid`, a.`name`, a.`invoice_number`, a.`inv_status`, a.`period_code`, a.`total_include_tax`, a.`final_amount`, a.`created_at`, a.`biller_guid`, IFNULL(b.`status`, '') AS file_status, IFNULL(b.`created_at`, '') AS slip_created_at, IFNULL(c.`user_id`, '') AS slip_created_by, IFNULL(b.`updated_at`, '') AS slip_updated_at, IFNULL(d.`user_id`, '') AS slip_updated_by, 'Subscription' AS invoice_type, IF(a.`inv_status` = 'Emailed','1','2') AS sorting, IF(b.status = 'Uploaded' && a.`inv_status` = 'Emailed', '1', IF(b.status IS NULL && a.`inv_status` = 'Emailed','2','3')) AS sorting_two , IF(e.`Variance` = '1','Block','') AS variance_status FROM b2b_invoice.supplier_monthly_main a LEFT JOIN lite_b2b.`invoice_slip` b ON a.`invoice_number` = b.`invoice_number` LEFT JOIN lite_b2b.`set_user` c ON b.`created_by` = c.`user_guid` LEFT JOIN lite_b2b.`set_user` d ON b.`updated_by` = d.`user_guid` LEFT JOIN lite_b2b.`query_outstanding_retailer` e ON a.`biller_guid` = e.`supplier_guid` AND e.`Variance` = '1' GROUP BY a.`inv_guid` UNION ALL SELECT a.`inv_guid`, a.`name`, a.`invoice_number`, a.`inv_status`, a.`period_code`, a.`total_include_tax`, a.`final_amount`, a.`created_at`, a.`biller_guid`, IFNULL(b.`status`, '') AS file_status, IFNULL(b.`created_at`, '') AS slip_created_at, IFNULL(c.`user_id`, '') AS slip_created_by, IFNULL(b.`updated_at`, '') AS slip_updated_at, IFNULL(d.`user_id`, '') AS slip_updated_by, 'Registration' AS invoice_type, IF(a.`inv_status` = 'Emailed','1','2') AS sorting, IF(b.status = 'Uploaded' && a.`inv_status` = 'Emailed', '1', IF(b.status IS NULL && a.`inv_status` = 'Emailed','2','3')) AS sorting_two , IF(e.`Variance` = '1','Block','') AS variance_status FROM b2b_invoice.inv_doc a LEFT JOIN lite_b2b.`invoice_slip` b ON a.`invoice_number` = b.`invoice_number` LEFT JOIN lite_b2b.`set_user` c ON b.`created_by` = c.`user_guid` LEFT JOIN lite_b2b.`set_user` d ON b.`updated_by` = d.`user_guid` LEFT JOIN lite_b2b.`query_outstanding_retailer` e ON a.`biller_guid` = e.`supplier_guid` AND e.`Variance` = '1' GROUP BY a.`inv_guid`) a ORDER BY FIELD (a.sorting_two, '1','2','3') ASC , FIELD (a.sorting, '1','2') ASC  , a.name ASC";
+            $sql = "SELECT * FROM (SELECT 'Subscription' AS invoice_type, a.`inv_guid`, a.`biller_guid`, a.`name`, a.`invoice_number`, a.`inv_status`, a.`inv_date`, DATE_FORMAT(a.`inv_date`, '%d-%M-%Y') AS invoice_date, a.`period_code`, a.`total_include_tax`, a.`final_amount`, a.`created_at`,b.`inv_guid` AS cn_inv_guid, b.`invoice_number` AS cn_inv_no FROM b2b_invoice.supplier_monthly_main a LEFT JOIN b2b_invoice.`supplier_cn_main` b ON a.invoice_number = b.monthly_invoice_number WHERE a.inv_status != 'New' GROUP BY a.`inv_guid` ) a ORDER BY a.name ASC";
             //ORDER BY FIELD (a.sorting_two, '1','2','3') ASC , FIELD (a.sorting, '1','2') ASC  , a.slip_created_at DESC
         }
         else{
@@ -236,13 +234,13 @@ class b2b_billing_invoice_controller extends CI_Controller {
                 $combine_guid = $guid;
             }
 
-            $sql = "SELECT * FROM ( SELECT a.`inv_guid`, a.`name`, a.`invoice_number`, a.`inv_status`, a.`period_code`, a.`total_include_tax`, a.`final_amount`, a.`created_at`, a.`biller_guid`, IFNULL(b.`status`, '') AS file_status, IFNULL(b.`created_at`, '') AS slip_created_at, IFNULL(c.`user_id`, '') AS slip_created_by, IFNULL(b.`updated_at`, '') AS slip_updated_at, IFNULL(d.`user_id`, '') AS slip_updated_by, 'Subscription' AS invoice_type, IF(a.`inv_status` = 'Emailed','1','2') AS sorting, IF(b.status = 'Uploaded' && a.`inv_status` = 'Emailed', '1', IF(b.status IS NULL && a.`inv_status` = 'Emailed','2','3')) AS sorting_two , '' AS variance_status FROM b2b_invoice.supplier_monthly_main a LEFT JOIN lite_b2b.`invoice_slip` b ON a.`invoice_number` = b.`invoice_number` LEFT JOIN lite_b2b.`set_user` c ON b.`created_by` = c.`user_guid` LEFT JOIN lite_b2b.`set_user` d ON b.`updated_by` = d.`user_guid` WHERE a.biller_guid IN ($combine_guid) AND a.name IN ($name) AND a.inv_status != 'New' GROUP BY a.`inv_guid` UNION ALL SELECT a.`inv_guid`, a.`name`, a.`invoice_number`, a.`inv_status`, a.`period_code`, a.`total_include_tax`, a.`final_amount`, a.`created_at`, a.`biller_guid`, IFNULL(b.`status`, '') AS file_status, IFNULL(b.`created_at`, '') AS slip_created_at, IFNULL(c.`user_id`, '') AS slip_created_by, IFNULL(b.`updated_at`, '') AS slip_updated_at, IFNULL(d.`user_id`, '') AS slip_updated_by, 'Registration' AS invoice_type, IF(a.`inv_status` = 'Emailed','1','2') AS sorting, IF(b.status = 'Uploaded' && a.`inv_status` = 'Emailed', '1', IF(b.status IS NULL && a.`inv_status` = 'Emailed','2','3')) AS sorting_two , '' AS variance_status FROM b2b_invoice.inv_doc a LEFT JOIN lite_b2b.`invoice_slip` b ON a.`invoice_number` = b.`invoice_number` LEFT JOIN lite_b2b.`set_user` c ON b.`created_by` = c.`user_guid` LEFT JOIN lite_b2b.`set_user` d ON b.`updated_by` = d.`user_guid` WHERE a.biller_guid IN ($guid) AND a.inv_status != 'New' GROUP BY a.`inv_guid` )a ORDER BY FIELD (a.sorting, '1','2') ASC ,FIELD (a.sorting_two, '2','1','3') ASC , a.name ASC";
-            //print_r($sql);die;
+            $sql = "SELECT * FROM ( SELECT 'Subscription' AS invoice_type, a.`inv_guid`, a.`biller_guid`, a.`name`, a.`invoice_number`, a.`inv_status`, a.`inv_date`, DATE_FORMAT(a.`inv_date`, '%d-%M-%Y') AS invoice_date, a.`period_code`, a.`total_include_tax`, a.`final_amount`, a.`created_at`,b.`inv_guid` AS cn_inv_guid, b.`invoice_number` AS cn_inv_no FROM b2b_invoice.supplier_monthly_main a LEFT JOIN b2b_invoice.`supplier_cn_main` b ON a.invoice_number = b.monthly_invoice_number WHERE a.biller_guid IN ($combine_guid) AND a.name IN ($name) AND a.inv_status != 'New' GROUP BY a.`inv_guid` ) a ORDER BY a.name ASC";
+            // print_r($sql);die;
             //($guid)
         }
 
         //print_r($query); die;
-        $query = "SELECT * FROM ( ".$sql." ) aa ".$like_first_query.$like_second_query.$limit_query;
+        $query = "SELECT * FROM ( ".$sql." ) aa ".$like_first_query.$like_second_query. $order_query .$limit_query;
 
         $result = $this->db->query($query);
 
@@ -273,15 +271,20 @@ class b2b_billing_invoice_controller extends CI_Controller {
             $nestedData['inv_status'] = $row->inv_status;
             $nestedData['created_at'] = $row->created_at;
             $nestedData['biller_guid'] = $row->biller_guid;
-            $nestedData['file_status'] = $row->file_status;
-            $nestedData['slip_created_at'] = $row->slip_created_at;
-            $nestedData['slip_created_by'] = $row->slip_created_by;
-            $nestedData['slip_updated_at'] = $row->slip_updated_at;
-            $nestedData['slip_updated_by'] = $row->slip_updated_by;
+            // $nestedData['file_status'] = $row->file_status;
+            // $nestedData['slip_created_at'] = $row->slip_created_at;
+            // $nestedData['slip_created_by'] = $row->slip_created_by;
+            // $nestedData['slip_updated_at'] = $row->slip_updated_at;
+            // $nestedData['slip_updated_by'] = $row->slip_updated_by;
             $nestedData['invoice_type'] = $row->invoice_type;
-            $nestedData['sorting'] = $row->sorting;
-            $nestedData['sorting_two'] = $row->sorting_two;
-            $nestedData['variance_status'] = $row->variance_status;
+            // $nestedData['sorting'] = $row->sorting;
+            // $nestedData['sorting_two'] = $row->sorting_two;
+            // $nestedData['variance_status'] = $row->variance_status;
+            $nestedData['invoice_date'] = $row->invoice_date;
+            $nestedData['cn_inv_no'] = $row->cn_inv_no;
+            $nestedData['cn_inv_guid'] = $row->cn_inv_guid;
+            
+            
 
             $data[] = $nestedData;
 
@@ -304,7 +307,7 @@ class b2b_billing_invoice_controller extends CI_Controller {
 
         $status_data = $this->input->post('filter_status_data');
         $supplier_guid = $this->input->post('filter_supplier_guid');
-        $period_code = $this->input->post('filter_period_code');
+        $period_code = implode("','",$this->input->post('filter_period_code'));
 
         if($status_data == '' && $period_code == '' && $supplier_guid == '')
         {
@@ -316,26 +319,26 @@ class b2b_billing_invoice_controller extends CI_Controller {
         }
         else if($status_data != '' && $period_code != '' && $supplier_guid == '')
         {
-            $condition = " WHERE a.file_status = '$status_data' AND a.inv_status = 'Emailed' AND a.period_code = '$period_code' ";
+            $condition = " WHERE a.file_status = '$status_data' AND a.inv_status = 'Emailed' AND LEFT(a.inv_date,7) IN ('$period_code') ";
         }
         else if($status_data != '' && $period_code != '' && $supplier_guid != '')
         {
-            $condition = " WHERE a.file_status = '$status_data' AND a.inv_status = 'Emailed' AND a.period_code = '$period_code' AND a.biller_guid = '$supplier_guid'  ";
+            $condition = " WHERE a.file_status = '$status_data' AND a.inv_status = 'Emailed' AND LEFT(a.inv_date,7) IN ('$period_code') AND a.biller_guid = '$supplier_guid'  ";
         }
         else if($status_data == '' && $period_code != '' && $supplier_guid == '')
         {
-            $condition = "WHERE a.period_code = '$period_code'";
+            $condition = "WHERE LEFT(a.inv_date,7) IN ('$period_code')";
         }
         else if($status_data == '' && $period_code != '' && $supplier_guid != '')
         {
-            $condition = "WHERE a.period_code = '$period_code' AND a.biller_guid = '$supplier_guid'";
+            $condition = "WHERE LEFT(a.inv_date,7) IN ('$period_code') AND a.biller_guid = '$supplier_guid'";
         }
         else if($status_data == '' && $period_code == '' && $supplier_guid != '')
         {
             $condition = "WHERE a.biller_guid = '$supplier_guid'";
         }
 
-        $query_data = $this->db->query("SELECT * FROM (SELECT a.`inv_guid`, a.`name`, a.`invoice_number`, a.`inv_status`, a.`period_code`, a.`total_include_tax`, a.`final_amount`, a.`created_at`, a.`biller_guid`, IFNULL(b.`status`, '') AS file_status, IFNULL(b.`created_at`, '') AS slip_created_at, IFNULL(c.`user_id`, '') AS slip_created_by, IFNULL(b.`updated_at`, '') AS slip_updated_at, IFNULL(d.`user_id`, '') AS slip_updated_by, 'Subscription' AS invoice_type, IF(a.`inv_status` = 'Emailed','1','2') AS sorting, IF(b.status = 'Uploaded' && a.`inv_status` = 'Emailed', '1', IF(b.status IS NULL && a.`inv_status` = 'Emailed','2','3')) AS sorting_two , IF(e.`Variance` = '1','Block','') AS variance_status FROM b2b_invoice.supplier_monthly_main a LEFT JOIN lite_b2b.`invoice_slip` b ON a.`invoice_number` = b.`invoice_number` LEFT JOIN lite_b2b.`set_user` c ON b.`created_by` = c.`user_guid` LEFT JOIN lite_b2b.`set_user` d ON b.`updated_by` = d.`user_guid` LEFT JOIN lite_b2b.`query_outstanding_retailer` e ON a.`biller_guid` = e.`supplier_guid` AND e.`Variance` = '1' GROUP BY a.`inv_guid` UNION ALL SELECT a.`inv_guid`, a.`name`, a.`invoice_number`, a.`inv_status`, a.`period_code`, a.`total_include_tax`, a.`final_amount`, a.`created_at`, a.`biller_guid`, IFNULL(b.`status`, '') AS file_status, IFNULL(b.`created_at`, '') AS slip_created_at, IFNULL(c.`user_id`, '') AS slip_created_by, IFNULL(b.`updated_at`, '') AS slip_updated_at, IFNULL(d.`user_id`, '') AS slip_updated_by, 'Registration' AS invoice_type, IF(a.`inv_status` = 'Emailed','1','2') AS sorting, IF(b.status = 'Uploaded' && a.`inv_status` = 'Emailed', '1', IF(b.status IS NULL && a.`inv_status` = 'Emailed','2','3')) AS sorting_two , IF(e.`Variance` = '1','Block','') AS variance_status FROM b2b_invoice.inv_doc a LEFT JOIN lite_b2b.`invoice_slip` b ON a.`invoice_number` = b.`invoice_number` LEFT JOIN lite_b2b.`set_user` c ON b.`created_by` = c.`user_guid` LEFT JOIN lite_b2b.`set_user` d ON b.`updated_by` = d.`user_guid` LEFT JOIN lite_b2b.`query_outstanding_retailer` e ON a.`biller_guid` = e.`supplier_guid` AND e.`Variance` = '1' GROUP BY a.`inv_guid`) a $condition ORDER BY FIELD (a.sorting_two, '1','2','3') ASC , FIELD (a.sorting, '1','2') ASC  , a.name ASC");
+        $query_data = $this->db->query("SELECT * FROM (SELECT 'Subscription' AS invoice_type, a.`inv_guid`, a.`biller_guid`, a.`name`, a.`invoice_number`, a.`inv_status`, a.`inv_date`, DATE_FORMAT(a.`inv_date`, '%d-%M-%Y') AS invoice_date, a.`period_code`, a.`total_include_tax`, a.`final_amount`, a.`created_at`,b.`inv_guid` AS cn_inv_guid, b.`invoice_number` AS cn_inv_no FROM b2b_invoice.supplier_monthly_main a LEFT JOIN b2b_invoice.`supplier_cn_main` b ON a.invoice_number = b.monthly_invoice_number WHERE a.inv_status != 'New' GROUP BY a.`inv_guid` ) a $condition ORDER BY a.name ASC");
         //echo $this->db->last_query();die;
         $data = array(  
             'query_data' => $query_data->result(),
@@ -1685,8 +1688,6 @@ class b2b_billing_invoice_controller extends CI_Controller {
 
 
     }
-
-
 
     public function invoices_process_break()
     {   

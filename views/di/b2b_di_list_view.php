@@ -54,13 +54,13 @@
           <div class="box-body">
             <div class="col-md-12">
               <div class="row">
-                <div class="col-md-2"><b>PO Ref No</b></div>
+                <div class="col-md-2"><b>Invoice Ref No</b></div>
                 <div class="col-md-4">
                   <input id="po_num" name="po_num" type="text" autocomplete="off" class="form-control pull-right">
                 </div>
                 <div class="clearfix"></div><br>
 
-                <div class="col-md-2"><b>PO Status</b></div>
+                <div class="col-md-2"><b>DI Status</b></div>
                 <div class="col-md-4">
                   <select id="po_status" name="po_status" class="form-control">
                     <?php foreach ($po_status->result() as $row) { ?>
@@ -74,7 +74,7 @@
                 </div>
                 <div class="clearfix"></div><br>
 
-                <div class="col-md-2"><b>PO Date Range<br>(YYYY-MM-DD)</b></div>
+                <div class="col-md-2"><b>DI Date Range<br>(YYYY-MM-DD)</b></div>
                 <div class="col-md-4">
                   <input required id="daterange" name="daterange" type="datetime" class="form-control pull-right" id="reservationtime" readonly>
                 </div>

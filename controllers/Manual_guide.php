@@ -13,88 +13,58 @@ class manual_guide extends CI_Controller {
         $this->load->library('form_validation');
 
 	}
-    
-    
+
     public function index()
     {
-            if($this->session->userdata('loginuser') == true && $this->session->userdata('userid') != '' && $_SESSION['user_logs'] == $this->panda->validate_login())
-            {     
-                $user_guid = $_SESSION['user_guid'];
-                $customer_guid =  $_SESSION['customer_guid'];
-                $file_path = $this->db->query("SELECT * FROM lite_b2b.acc WHERE acc_guid = '$customer_guid'");
-                $path = $file_path->row('file_path');
-                $file_config_main_path = $this->file_config_b2b->file_path_name($customer_guid,'web','manual_guide','sec_path','MNLGS');
-                $defined_path = $file_config_main_path.$path;
-                //print_r($defined_path); die;
-                if ( isset($_REQUEST['sv']) ) {
+        if($this->session->userdata('loginuser') == true && $this->session->userdata('userid') != '' && $_SESSION['user_logs'] == $this->panda->validate_login())
+        {     
+            $customer_guid =  $_SESSION['customer_guid'];
+            $file_config_main_path = $this->file_config_b2b->file_path_name($customer_guid,'web','manual_guide','sec_path','MNLGS');
+            $defined_path = $file_config_main_path;
 
-                    $search_value = $this->input->post('search_value');
+            if ( isset($_REQUEST['sv']) ) {
 
-                    $manual_guide = $this->db->query("SELECT title, description, file_name FROM lite_b2b.manual_guide WHERE active = '1' AND customer_guid = '$customer_guid' AND title LIKE '%$search_value%' ORDER BY seq ASC");
-                } else{
+                $search_value = $this->input->post('search_value');
 
-                    $manual_guide = $this->db->query("SELECT title, description, file_name FROM lite_b2b.manual_guide WHERE active = '1' AND lang_type = 'EN' AND customer_guid = '$customer_guid' ORDER BY seq ASC");
+                $manual_guide = $this->db->query("SELECT mg.title, mg.description, mg.file_name FROM lite_b2b.mc_guide mg INNER JOIN mc_guide_c mgc ON mg.guide_guid = mgc.guide_guid WHERE mg.active = '1' AND mgc.customer_guid = '$customer_guid' AND mg.title LIKE '%$search_value%' ORDER BY mg.seq ASC");
+            } else{
 
-                    $search_value = '';
+                $manual_guide = $this->db->query("SELECT mg.title, mg.description, mg.file_name FROM lite_b2b.mc_guide mg INNER JOIN mc_guide_c mgc ON mg.guide_guid = mgc.guide_guid WHERE mg.active = '1' AND mg.lang_type = 'EN' AND mgc.customer_guid = '$customer_guid' ORDER BY mg.seq ASC");
 
-                }
-
-                $this->panda->get_uri();
-
-                /*if ($_SESSION['user_group_name'] != "SUPER_ADMIN" ) {
-                    $invoice_list = $this->db->query("SELECT * FROM b2b_invoice.supplier_monthly_main WHERE biller_guid = '$supplier_guid' AND inv_status != 'New' ");
-                } else{
-
-                    $invoice_list = $this->db->query("SELECT * FROM b2b_invoice.supplier_monthly_main ");
-
-                }
-*/
-                
-  
-                $data = array(
-
-                'manual_guide' => $manual_guide,
-                'search_value' => $search_value,
-                'path' => $path,
-                'defined_path' => $defined_path,
-                
-                );
-
-                $this->panda->get_uri();
-                $this->load->view('header');
-                $this->load->view('manual_guide/main', $data);
-                $this->load->view('footer');  
+                $search_value = '';
 
             }
-            else
-            {
-                $this->session->set_flashdata('message', 'Session Expired! Please relogin');
-                redirect('#');
-            }  
-        
-    }
-
-            public function change_language()
-    {
-         
-            $language_type = $_REQUEST['lt'];
-            $customer_guid = $_SESSION['customer_guid'];
-            $file_path = $this->db->query("SELECT * FROM lite_b2b.acc WHERE acc_guid = '$customer_guid'");
-            $path = $file_path->row('file_path');
-
-            $manual_guide = $this->db->query("SELECT title, description, file_name FROM lite_b2b.manual_guide WHERE active = '1' AND lang_type = '$language_type' AND customer_guid = '$customer_guid' ORDER BY seq ASC")->result();            
-
 
             $data = array(
                 'manual_guide' => $manual_guide,
-                'path' => $path
+                'search_value' => $search_value,
+                'defined_path' => $defined_path,
             );
 
-            echo json_encode($data);
-        
-            
+            $this->load->view('header');
+            $this->load->view('manual_guide/main', $data);
+            $this->load->view('footer');  
 
-   
+        }else{
+            $this->session->set_flashdata('message', 'Session Expired! Please relogin');
+            redirect('#');
+        }  
+        
+    }
+
+    public function change_language()
+    {
+        $language_type = $_REQUEST['lt'];
+        $customer_guid = $_SESSION['customer_guid'];
+            
+        $manual_guide = $this->db->query("SELECT mg.title, mg.description, mg.file_name FROM lite_b2b.mc_guide mg INNER JOIN mc_guide_c mgc ON mg.guide_guid = mgc.guide_guid WHERE mg.active = '1' AND mg.lang_type = '$language_type' AND mgc.customer_guid = '$customer_guid' ORDER BY mg.seq ASC")->result();
+
+        $data = array(
+            'manual_guide' => $manual_guide
+        );
+
+        echo json_encode($data);
+        
     }
 
 

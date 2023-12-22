@@ -72,6 +72,7 @@ class login_c extends CI_Controller
             }
             else
             {
+
                 if ($result->row('user_group_name') == 'SUPP_ADMIN' || $result->row('user_group_name') == 'SUPP_CLERK' || $result->row('user_group_name') == 'LIMITED_SUPP_ADMIN') {
                     // $user_guid = $result->row('user_guid');
     

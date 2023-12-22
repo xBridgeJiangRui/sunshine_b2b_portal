@@ -170,7 +170,7 @@
                                 <div class="form-group"  id="div1" >
                                 <label class="control-label col-md-3">Supplier</label> 
                                     <div class="col-md-9">
-                                    <select name="supplier" class="form-control" style="width: 100%;">
+                                    <select name="supplier" class="form-control select2" style="width: 100%;">
                                     <?php
                                         foreach($set_supplier->result() as $row)
                                         {
@@ -190,7 +190,7 @@
                                 <div class="form-group"  id="div1">
                                 <label class="control-label col-md-3">Supplier Group</label> 
                                     <div class="col-md-9">
-                                      <select name="supplier_group" class="form-control" style="width: 100%;">
+                                      <select name="supplier_group" class="form-control select2" style="width: 100%;">
                                     <?php
                                         foreach($set_supplier_group->result() as $row)
                                         {

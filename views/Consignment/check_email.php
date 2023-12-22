@@ -24,6 +24,11 @@
 <div class="content-wrapper" style="min-height: 525px; text-align: justify;">
 <div class="container-fluid">
 <br>
+  <div class="col-md-12">
+    <a class="btn btn-app" href="<?php echo site_url('Consignment') ?>">
+      <i class="fa fa-undo"></i> Back
+    </a>
+  </div>
   <div class="row">
     <div class="col-md-12">
       <div class="box box-default">
@@ -38,35 +43,16 @@
         <!-- body -->
         <div class="box-body">
         <div class="col-md-12">
-            <div class="row">
-
-              <div class="col-md-2"><b>Date From<br>(YYYY-MM-DD)</b></div>
-              <div class="col-md-2">
-                <input  id="date_from" name="date_from" type="datetime" value="" readonly class="form-control pull-right">
-              </div>
-              <div class="col-md-2"><b>Date To<br>(YYYY-MM-DD)</b></div>
-              <div class="col-md-2">
-                <input  id="date_to" name="date_to" type="datetime" class="form-control pull-right" readonly value="">
-              </div>
-              <div class="col-md-1">
-                <a class="btn btn-danger" onclick="expiry_clear()">Clear</a>
-              </div>
-
-              <div class="clearfix"></div><br>
-
-              
-                <!-- </form> -->
-            </div>
 
             <div class="row">
 
-              <div class="col-md-2"><b>Code</b></div>
+              <div class="col-md-2"><b>Retailer</b></div>
               <div class="col-md-8">
-                <select id="outright_code" name="outright_code[]" class="form-control select2" required>
-                  <option value="">Please Select One Code</option> 
-                  <?php foreach($code->result() as $row){ ?>
-                    <option value="<?php echo $row->Code ?>"> 
-                    <?php echo $row->Code.' - '.$row->Name; ?></option>
+                <select id="retailer" name="retailer[]" class="form-control select2" required>
+                  <option value="">Please Select Retailer</option> 
+                  <?php foreach($retailer->result() as $row){ ?>
+                    <option value="<?php echo $row->acc_guid ?>"> 
+                    <?php echo $row->acc_name; ?></option>
                  <?php } ?>
                 </select>
               </div>
@@ -81,24 +67,54 @@
 
             <div class="row">
 
-              <div class="col-md-2"><b>Location</b></div>
-              <div class="col-md-8">
-                <select id="outright_location" name="outright_location[]" class="form-control select2" multiple required>
-                  <?php foreach($location->result() as $row){ ?>
-                    <option value="<?php echo $row->branch_code ?>"> 
-                    <?php echo $row->branch_code.' - '.$row->branch_desc; ?></option>
+              <div class="col-md-2"><b>Effective Date</b></div>
+              <div class="col-md-3">
+                <select id="effective_date" name="effective_date[]" class="form-control select2" required>
+                  <option value="">Please Select Effective Date</option> 
+                  <?php foreach($effective_date->result() as $row){ ?>
+                    <option value="<?php echo $row->effective_date ?>"> 
+                    <?php echo $row->effective_date; ?></option>
                  <?php } ?>
                 </select>
               </div>
-              <div class="col-md-2">
-                    <button id="outright_location_all" class="btn btn-primary" >ALL</button>
-                    <button id="outright_location_all_dis" class="btn btn-danger" >X</button>
+
+              <div class="col-md-2"><b>Statement Date</b></div>
+              <div class="col-md-3">
+                <select id="statement_date" name="statement_date[]" class="form-control select2" required>
+                  <option value="">Please Select Statement Date</option> 
+                  <?php foreach($statement_date->result() as $row){ ?>
+                    <option value="<?php echo $row->statement_date ?>"> 
+                    <?php echo $row->statement_date; ?></option>
+                 <?php } ?>
+                </select>
               </div>
               <div class="clearfix"></div><br>
 
                 <!-- </form> -->
                     
-            </div>     
+            </div>   
+            
+            <div class="row">
+
+              <div class="col-md-2"><b>Email</b></div>
+              <div class="col-md-3">
+                <input type="text" id="email" name="email" class="form-control pull-right">
+              </div>
+
+              <div class="col-md-2"><b>Status</b></div>
+              <div class="col-md-3">
+                <select id="status" name="status[]" class="form-control" required>
+                  <option value="">Please Select Status</option> 
+                  <option value="success"> Success</option>
+                  <option value="fail"> Failed</option>
+                  <option value="pending"> Pending</option>
+                </select>
+              </div>
+              <div class="clearfix"></div><br>
+
+                <!-- </form> -->
+                    
+            </div>  
 
             <div class="row">
               <div class="col-md-2">
@@ -117,7 +133,7 @@
     <div class="col-md-12 col-xs-12">
       <div class="box">
         <div class="box-header with-border">
-          <h3 class="box-title">Daily Sales By Supplier<span class="add_branch_list"></span></h3>
+          <h3 class="box-title">Consign Statement Email <span class="add_branch_list"></span></h3>
           <div class="box-tools pull-right">
             <?php if(in_array('IAVA',$_SESSION['module_code']))
             {
@@ -129,10 +145,6 @@
             }
             ?> 
           </div>
-          <div class="box-body" >
-            <button id="download_excel" onClick="downloadExcel()" hidden>CSV</button>
-            <span id="append_table"></span>
-          </div>
         </div>
         <!-- /.box-header -->
         <div class="box-body" >
@@ -140,17 +152,13 @@
           <table id="table1" class="table table-bordered table-hover" width="100%" cellspacing="0">
             <thead style="white-space: nowrap;"> <!--style="white-space: nowrap;"-->
             <tr>
-              <th>Supplier Name</th>
-              <th>Supplier Code</th>
-              <th>Biz Date</th>
-              <th>Location</th>
-              <th>Item Code</th>
-              <th>Item Type</th>
-              <th>Description</th>
-              <th>Barcode</th>
-              <th>Total Qty</th>
-              <th>UOM</th>
-              <th>Total NetSales</th>
+              <th>Retailer</th>
+              <th>Email</th>
+              <th>Effective Date</th>
+              <th>Statement Date</th>
+              <th>Status</th>
+              <th>Response Message</th>
+              <th>Send At</th>
             </tr>
             </thead>
             <tbody>
@@ -162,29 +170,6 @@
   </div>
 </div>
 </div>
-
-<script type="text/javascript">
-
-  function downloadExcel() {
-
-    document.getElementById("download_excel").disabled = true;
-
-    var date_start = $('#date_from').val();
-    var date_end = $('#date_to').val();
-    var outright_code = $('#outright_code').val();
-    var outright_location = $('#outright_location').val();
-
-    parameter = '?date_start='+date_start+'&date_end='+date_end+'&outright_code='+outright_code+'&outright_location='+outright_location+'&download_excel=true';
-
-    window.location.href = "<?php echo site_url('Article_report/sum_daily_table'); ?>" + parameter;
-
-    setTimeout(function() {
-      document.getElementById("download_excel").disabled = false;
-    }, 2000);
-
-  }
-
-</script>
 
 <script>
 $(document).ready(function() {
@@ -244,7 +229,7 @@ $(document).ready(function() {
   });
 
   $(function() {
-    mend = '<?php echo date('Y-m-t', strtotime(date('Y-m-d') . " - 31 days"));?>';
+    mend = '<?php echo date('Y-m-t', strtotime(date('Y-m-d') . " - 30 days"));?>';
     $('input[name="date_to"]').daterangepicker({
         locale: {
         format: 'YYYY-MM-DD'
@@ -268,55 +253,22 @@ $(document).ready(function() {
 
   $(document).on('click','#search_data',function(){
 
-    var date_start = $('#date_from').val();
-    var date_end = $('#date_to').val();
-    var outright_code = $('#outright_code').val();
-    var outright_location = $('#outright_location').val();
+    var retailer = $('#retailer').val();
+    var effective_date = $('#effective_date').val();
+    var statement_date = $('#statement_date').val();
+    var email = $('#email').val();
+    var status = $('#status').val();
 
-    if(date_start == '' || date_start == null)
-    {
-      alert('Please Choose Start Date');
-      return;
-    }
-
-    if(date_end == '' || date_end == null)
-    {
-      alert('Please Choose End Date');
-      return;
-    }
-
-    if(date_end < date_start)
-    {
-      alert('Date End cannot smaller than date start.');
-      return;
-    }
-
-    if(outright_code == '' || outright_code == null)
-    {
-      alert('Please Choose Code');
-      return;
-    }   
-
-    if(outright_location == '' || outright_location == null)
-    {
-      alert('Please Choose Location');
-      return;
-    }    
-
-    document.getElementById("download_excel").removeAttribute("hidden");
-
-    datatable(date_start,date_end,outright_code,outright_location);
-    // $('.add_branch_list').addClass('pill_button');
-    // $('.add_branch_list').html(value);
+    datatable(retailer,effective_date,statement_date,email,status);
 
   });//close search button
 
-  datatable = function(date_start,date_end,outright_code,outright_location)
+  datatable = function(retailer,effective_date,statement_date,email,status)
   { 
     $.ajax({
-      url : "<?php echo site_url('Article_report/sum_daily_table');?>",
+      url : "<?php echo site_url('Consignment/check_email_list');?>",
       method: "POST",
-      data:{date_start:date_start,date_end:date_end,outright_code:outright_code,outright_location:outright_location},
+      data:{retailer:retailer,effective_date:effective_date,statement_date:statement_date,email:email,status:status},
       beforeSend : function() {
           $('.btn').button('loading');
       },
@@ -332,8 +284,8 @@ $(document).ready(function() {
 
         $('#table1').DataTable({
         "columnDefs": [
-        { className: "aligncenter", targets: [8,9] },
-        { className: "alignright", targets: [10] },
+        { className: "aligncenter", targets: [] },
+        { className: "alignright", targets: [6] },
         { className: "alignleft", targets: '_all' },
         ],
         'processing'  : true,
@@ -353,22 +305,33 @@ $(document).ready(function() {
         "bScrollCollapse": true,
           data: json['query_data'],
           columns: [
-              {"data" : "Supplier Name" },
-              {"data" : "Supplier Code" },
-              {"data" : "Biz Date" },
-              {"data" : "Location" },
-              {"data" : "Item Code"},
-              {"data" : "Item Type" },
-              {"data" : "Description" },
-              {"data" : "Barcode" },
-              {"data" : "Total Qty" },
-              {"data" : "UOM" },
-              {"data" : "Total NetSales" },
-          ],
-          dom: "<'row'<'col-sm-4'l><'col-sm-8'f>>rtip",  
+                    {"data" : "acc_name" },
+                    {"data" : "email_add" },
+                    {"data" : "effective_date" },
+                    {"data" : "statement_date" },
+                    {"data": "status" ,render:function( data, type, row ){
+
+                      var element = '';
+
+                      if(row['status'] == '3'){
+                        element += '<button type="button" class="btn btn-xs btn-success"> Success</button>';
+                      }else if(row['status'] == '99'){
+                        element += '<button type="button" class="btn btn-xs btn-danger"> Failed</button>';
+                      }else{
+                        element += '<button type="button" class="btn btn-xs btn-warning"> Pending</button>';
+                      }
+
+                      return element;
+
+                    }},
+                    {"data" : "remark" },
+                    {"data" : "sent_at" },
+                   ],
+          dom: "<'row'<'col-sm-4'l><'col-sm-8'f>>Brtip",  
           buttons: [
                 {
-                    extend: 'csv'
+                    extend: 'csv',
+                    title: 'Consign Check Email'
                 }
           ],
           "language": {
@@ -405,6 +368,21 @@ $(document).ready(function() {
     $("#outright_location option").prop('selected',false);
     $(".select2").select2();
   });//CLOSE ONCLICK  
+
+  $(document).on('click', '#category_all', function(){
+    // alert();
+    var category = $('#category').val('All_jing');
+    // $("#category option").prop('selected',true);
+    $(".select2").select2();
+  });//CLOSE ONCLICK  
+
+  $(document).on('click', '#category_all_dis', function(){
+    // alert();
+    $("#category option").prop('selected',false);
+    $(".select2").select2();
+  });//CLOSE ONCLICK 
+
+  datatable('','','','','');
 
 });
 </script>

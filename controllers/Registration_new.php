@@ -1340,7 +1340,7 @@ class registration_new extends CI_Controller
           $dis_msg2 = 'Not Map';
         }
 
-        $user_group_dropdown_array = $this->db->query("SELECT * FROM set_user_group WHERE module_group_guid = '" . $this->session->userdata('module_group_guid') . "' ORDER BY user_group_name ASC");
+        $user_group_dropdown_array = $this->db->query("SELECT * FROM set_user_group WHERE module_group_guid = '" . $this->session->userdata('module_group_guid') . "' AND admin_active >='1' ORDER BY group_info_status DESC, admin_active DESC , user_group_name ASC");
 
         $check_user_group_dropdown = $this->db->query("SELECT * FROM lite_b2b.set_user a WHERE a.user_id = '$part1' AND a.acc_guid = '" . $register->row('customer_guid') . "' GROUP BY a.user_guid");
         // echo $this->db->last_query().';<br>';
@@ -2297,8 +2297,8 @@ class registration_new extends CI_Controller
         $this->db->insert('lite_b2b.set_supplier_group', $insert_value);
 
         $public_ip = $this->db->query("SELECT a.`public_ip`,a.`public_ip_3`
-      FROM lite_b2b.`acc` AS a
-      WHERE a.`acc_guid` = '$customer_guid'");
+        FROM lite_b2b.`acc` AS a
+        WHERE a.`acc_guid` = '$customer_guid'");
 
         $username = 'admin'; //get from rest.php
         $password = '1234'; //get from rest.php
@@ -2392,7 +2392,58 @@ class registration_new extends CI_Controller
           }
         }
       } else {
-        continue;
+
+        $public_ip = $this->db->query("SELECT a.`public_ip`,a.`public_ip_3`
+        FROM lite_b2b.`acc` AS a
+        WHERE a.`acc_guid` = '$customer_guid'");
+
+        $username = 'admin'; //get from rest.php
+        $password = '1234'; //get from rest.php
+        $insert_sql_query = '1';
+        // ninso update HHQ and HQ 
+        if ($customer_guid == '599348EDCB2F11EA9A81000C29C6CEB2') {
+          $url = array(
+            'url' => $public_ip->row('public_ip') . '/lite_panda_b2b_checking_rest/index.php/Update_b2b_flag',
+            'url_2' => $public_ip->row('public_ip_3') . '/lite_panda_b2b_checking_rest/index.php/Update_b2b_flag',
+          );
+        } else {
+          $url = array(
+            'url' => $public_ip->row('public_ip') . '/lite_panda_b2b_checking_rest/index.php/Update_b2b_flag',
+          );
+        }
+
+        foreach ($url as $key => $value) {
+
+          $ch = curl_init($value);
+          curl_setopt($ch, CURLOPT_TIMEOUT, 0);
+          curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+          curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
+          curl_setopt($ch, CURLOPT_HTTPHEADER, array("X-Api-KEY: 123456"));
+          curl_setopt($ch, CURLOPT_USERPWD, "$username:$password");
+          curl_setopt($ch, CURLOPT_POST, 1);
+          curl_setopt($ch, CURLOPT_POSTFIELDS, array('vendor_code' => $supplier_group_name, 'type' => 'create', 'insert_sql_query' => $insert_sql_query));
+
+          $result = curl_exec($ch);
+
+          $output =  json_decode($result, true);
+
+          $log = array(
+            'guid' => $this->db->query("SELECT UPPER(REPLACE(UUID(),'-','')) as guid")->row('guid'),
+            'customer_guid' => $customer_guid,
+            'status' => ($output['status'] == 'true') ? 'Success' : 'Error',
+            'reason' => $output['message'],
+            'vendor_code' => json_encode($supplier_group_name),
+            'module' => 'manual_exists',
+            'created_at' => date("Y-m-d H:i:s"),
+            'created_by' =>  $_SESSION['userid'],
+          );
+
+          $this->db->insert('lite_b2b.mapping_vendor_code_error_log', $log);
+        }
+
+        $para1 = 0;
+        $msg .= 'Vendor Code :' . $supplier_group_name . ' Flow HQ Successfully.\n';
+        // continue;
       }
     }
     $data = array(

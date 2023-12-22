@@ -211,7 +211,7 @@
                         <?php if($exists_consign_inv_file == 1)
                         {
                         ?>
-                          <a target="_blank" href="<?php echo site_url('Upload/view_upload?parameter='.$file_upload_supcode.'&parameter2='.$file_upload_supplier_guid.'&parameter3='.$file_upload_type).'&time='.date("Ymdhs");?>"><button class="btn btn-success" type="button">View Supplier Inv</button></a>
+                          <a target="_blank" href="<?php echo site_url('Upload/view_upload?parameter='.$file_upload_supcode.'&parameter2='.$file_upload_supplier_guid.'&parameter3='.$file_upload_type).'&time='.date("Ymdhs").'&company_id='.$_REQUEST['company_id'];?>"><button class="btn btn-success" type="button">View Supplier Inv</button></a>
                           <!-- <button type="submit" class="btn btn-primary">Generate E invoice</button> -->
                         <?php
                         } 
@@ -688,7 +688,8 @@ $(document).ready(function(){
     //alert(submit_period); die;
     doc_type = 'consign';
     trans_list = "<?php echo $_REQUEST['trans'];?>";
-    // alert(submit_period);return;
+    upload_company_id = "<?php echo $_REQUEST['company_id'];?>";
+
     var modal = $("#medium-modal").modal();
 
     modal.find('.modal-title').html('Upload Consign Invoice');
@@ -706,6 +707,7 @@ $(document).ready(function(){
     methodd +='<input type="hidden" id="upload_consign_inv_statuss" name="upload_consign_inv_statuss" value="'+status+'" style="display:none;">';
     methodd +='<input type="hidden" id="upload_consign_inv_trans_list" name="upload_consign_inv_trans_list" value="'+trans_list+'" style="display:none;">';
     methodd +='<input type="hidden" id="upload_consign_date_trans" name="upload_consign_date_trans" value="'+upload_date_trans+'" style="display:none;">';
+    methodd +='<input type="hidden" id="upload_company_id" name="upload_company_id" value="'+upload_company_id+'" style="display:none;">';
     methodd +='<input type="submit" id="upload_consign_inv_submit_button_hide" style="display:none;"></form>';
 
     methodd_footer = '<p class="full-width"><span class="pull-right"><input type="button" id="upload_consign_inv_submit_button" class="btn btn-success" value="Upload"> <input name="sendsumbit" type="button" class="btn btn-default" data-dismiss="modal" value="Close"> </span></p>';

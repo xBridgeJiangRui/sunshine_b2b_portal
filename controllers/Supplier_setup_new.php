@@ -1835,5 +1835,353 @@ class Supplier_setup_new extends CI_Controller
             ));
         }
     }
+
+    public function file_upload()
+    {
+      $customer_guid = $_SESSION['customer_guid'];
+      
+      $user_id = $this->db->query("SELECT a.user_id FROM set_user a WHERE a.user_guid ='" . $_SESSION['user_guid'] . "'")->row('user_id');
+  
+      $file_uuid = $this->db->query("SELECT REPLACE(LOWER(UUID()),'-','') AS uuid")->row('uuid');
+      $now = $this->db->query("SELECT NOW() as now")->row('now');
+  
+      $file_config_main_path = $this->file_config_b2b->file_path_name($customer_guid, 'web', 'online_form', 'main_path', 'REG');
+  
+      $defined_path = $file_config_main_path; // './uploads/empty/';
+      //print_r($defined_path); die;
+  
+      ini_set('memory_limit', '-1');
+      ini_set('max_execution_time', 0);
+      ini_set('post_max_size', '64M');
+      ini_set('upload_max_filesize', '64M');
+  
+      $config['upload_path']          = $defined_path;
+      $config['allowed_types']        = '*';
+      $config['max_size']             = 50000;
+      $config['file_name'] = $file_uuid;
+      // var_dump( $this->input->post('file') );die; 
+  
+      $this->load->library('upload', $config);
+  
+      if (!$this->upload->do_upload('file')) {
+        $error = array('error' => $this->upload->display_errors());
+  
+        if (null != $error) {
+          $data = array(
+            'para1' => 1,
+            'msg' => 'Error do upload.',
+          );
+          echo json_encode($data);
+          exit();
+        } //close else
+  
+      } else {
+        $data = array('upload_data' => $this->upload->data());
+  
+        // print_r($_FILES["file"]);
+  
+        $filename = $defined_path . $data['upload_data']['file_name'];
+  
+        //  Include PHPExcel_IOFactory
+        $this->load->library('Excel');
+  
+        $inputFileName = $filename;
+  
+        //  Read your Excel workbook
+        try {
+          $inputFileType = PHPExcel_IOFactory::identify($inputFileName);
+          $objReader = PHPExcel_IOFactory::createReader($inputFileType);
+          $objPHPExcel = $objReader->load($inputFileName);
+        } catch (Exception $e) {
+  
+          $error_message = $this->lang->line('Error loading file "' . pathinfo($inputFileName, PATHINFO_BASENAME) . '": ' . $e->getMessage());
+          $xerror = $this->db->error();
+          $xerror['message'] = ($xerror['message'] == '') || ($xerror['message'] == null) ? $error_message : $xerror['message'];
+          $this->message->error_message_with_status($xerror['message'], '1', '');
+          exit();
+        }
+  
+        unlink($filename);
+      }
+      //Get worksheet dimensions
+      $sheet = $objPHPExcel->getSheet(0);
+      $highestRow = $sheet->getHighestRow();
+      $highestColumn = $sheet->getHighestColumn();
+      // $sheetCount = $sheet->getSheetCount();
+  
+      for ($row = 1; $row <= 1; $row++) {
+        //  Read a row of data into an array
+        $rowData = $sheet->rangeToArray('A' . $row . ':' . $highestColumn . $row, NULL, TRUE, FALSE);
+        //  Insert row data array into your database of choice here
+  
+      }
+  
+      // print_r($objPHPExcel->getSheetCount());die;
+  
+      //$header_array = array();
+  
+      $header_array = ['Supplier Name', 'Reg No'];
+  
+      $checking_array = array();
+  
+      //make array into string with comma
+      $exheader = '';
+      $exchild_main = '';
+      $set_supplier_exchild = '';
+      $update_syntax = '';
+  
+      $values = '';
+  
+      foreach ($rowData as $eheader) {
+        foreach ($eheader as $row) {
+          if ($row == '' || $row == null) {
+            continue;
+          } else {
+            $row = $row;
+          }
+  
+          $checking_array[] = $row;
+          $update_syntax .= $row . ' = ' . 'VALUES(' . $row . '),';
+        } //close small foreacH
+      } //close loop header array
+  
+      $update_syntax = rtrim($update_syntax, ',');
+  
+      $result = array_diff($header_array, $checking_array); //compare form
+  
+      if (null != $result) {
+  
+        $message = '';
+  
+        foreach ($result as $header) {
+          $message .= $header . ' ';
+        }
+  
+        $data = array(
+          'para1' => 1,
+          'msg' => $message . 'header is required.',
+        );
+        echo json_encode($data);
+        // $error_message = $message.$this->lang->line('header_is_required');
+        // $xerror = $this->db->error();
+        // $xerror['message'] = ($xerror['message'] == '') || ($xerror['message'] == null) ? $error_message : $xerror['message'];
+        // $this->message->error_message_with_status($xerror['message'], '1', '');
+        exit();
+      } //close if
+  
+      $result = array_diff($checking_array, $header_array); //compare form
+  
+      if (null != $result) {
+  
+        $message = '';
+  
+        foreach ($result as $header) {
+          $message .= $header . ' ';
+        }
+  
+        $data = array(
+          'para1' => 1,
+          'msg' => $message . 'header is not exists.',
+        );
+        echo json_encode($data);
+        // $error_message = $message.$this->lang->line('header_is_not_exist');
+        // $xerror = $this->db->error();
+        // $xerror['message'] = ($xerror['message'] == '') || ($xerror['message'] == null) ? $error_message : $xerror['message'];
+        // $this->message->error_message_with_status($xerror['message'], '1', '');
+        exit();
+      } //close if
+  
+      $check_escape_header_index = array();
+  
+      foreach ($rowData as $eheader) {
+        foreach ($eheader as $key => $row) {
+          if ($row == '' || $row == null) {
+            $check_escape_header_index[] = $key;
+  
+            continue;
+          } else {
+            $row = $row;
+          }
+  
+          $exheader .= $row . ',';
+        } //close loop through row
+      } //close loop header array
+      $xrow_b = 2;
+
+      //$supplier_guid = [];
+      for ($xrow = 2; $xrow <= $highestRow; $xrow++) {
+        //  Read a row of data into an array
+        $xrowData = $sheet->rangeToArray('A' . $xrow . ':' . $highestColumn . $xrow, NULL, TRUE, FALSE);
+  
+        $search_array = $sheet->rangeToArray('A' . 1 . ':' . $highestColumn . 1, NULL, TRUE, FALSE);
+  
+        $type_search = array_search('Supplier Name', $search_array[0]);
+  
+        $exchild = '';
+  
+        //if($this->isEmptyRow(reset($xrowData))) { continue; }
+  
+        foreach ($xrowData as $echild) {
+          foreach ($echild as $key => $row2) {
+            if ($key == $type_search) {
+              if (!($row2 == '' && $row2 == null)) {
+                $supplier_query = $this->db->query("SELECT * FROM lite_b2b.set_supplier WHERE supplier_name = '" . addslashes($row2) . "' ORDER BY supplier_name ASC");
+  
+                if ($supplier_query->num_rows() >= 1) {
+                  $data = array(
+                    'para1' => 'false',
+                    'msg' => 'Duplicate Supplier Name: ' . $row2 . '.',
+                  );
+                  echo json_encode($data);
+                  exit();
+                } //close num rows
+              } //close else
+            } //close itemcode
+          } //close foreach td itemcode
+        } //close loop row
+  
+      } //close foreach child data checking
+    
+      $r = '0';
+      for ($xrow = 2; $xrow <= $highestRow; $xrow++) {
+        //  Read a row of data into an array
+        $xrowData = $sheet->rangeToArray('B' . $xrow . ':' . $highestColumn . $xrow, NULL, TRUE, FALSE);
+  
+        $search_array = $sheet->rangeToArray('B' . 1 . ':' . $highestColumn . 1, NULL, TRUE, FALSE);
+  
+        $type_search = array_search('Reg No', $search_array[0]);
+  
+        $exchild = '';
+  
+        //if($this->isEmptyRow(reset($xrowData))) { continue; }
+  
+        foreach ($xrowData as $echild) {
+          foreach ($echild as $key => $row2) {
+            if ($key == $type_search) {
+              if (!($row2 == '' && $row2 == null)) {
+                $supplier_query = $this->db->query("SELECT * FROM lite_b2b.set_supplier WHERE reg_no = '$row2' AND supplier_guid = '$supplier_guid[$r]' ORDER BY supplier_name ASC");
+                //echo $this->db->last_query(); die;
+                $r++;
+                if ($supplier_query->num_rows() > 0) {
+                  $data = array(
+                    'para1' => 'false',
+                    'msg' => 'Duplicate Reg No: ' . $row2 . '.',
+                  );
+                  echo json_encode($data);
+                  exit();
+                } //close num rows
+              } //close else
+            } //close itemcode
+          } //close foreach td itemcode
+        } //close loop row
+  
+      } //close foreach child data checking
+  
+  
+      $lexheader = rtrim($exheader, ',');
+  
+      $string = '';
+      $string_main = '';
+      $typehead = '';
+      $valuechild = '';
+      $i = '0';
+  
+      for ($xrow = 2; $xrow <= $highestRow; $xrow++) {
+        //  Read a row of data into an array
+        $xrowData = $sheet->rangeToArray('A' . $xrow . ':' . $highestColumn . $xrow, NULL, TRUE, FALSE);
+  
+        $search_array = $sheet->rangeToArray('A' . 1 . ':' . $highestColumn . 1, NULL, TRUE, FALSE);
+  
+        $exchild = '';
+  
+        //if($this->isEmptyRow(reset($xrowData))) { continue; }
+  
+        foreach ($xrowData as $echild) {
+          unset($checking_child);
+          $v = 0;
+          foreach ($echild as $key => $row2) {
+            if ($v == '0') 
+            {
+              $row2 = $row2;
+              $name_reg = $row2;
+              $new_acc_code = 'PENDING';
+            }
+  
+            if ($v == '1') {
+              $row2 = $row2;
+            }
+
+            if ($v == '0') {
+                $exchild .= "'" . addslashes($row2) . "','" . addslashes($name_reg) . "','" . addslashes($new_acc_code) . "',";
+            } else {
+                $exchild .= "'" . addslashes($row2) . "',";
+            }
+
+            $v++;
+          } //close foreach
+          $supplier_guid = $this->db->query("SELECT REPLACE(UPPER(UUID()),'-','') AS uuid")->row('uuid');
+          $old_supplier_name = '';
+          $isactive = '9';
+          $gst_no = '';
+
+          $exchild_main .= "(" . $exchild . "'$supplier_guid','$old_supplier_name','$isactive','$gst_no','$now','$user_id','$now','$user_id'),";
+  
+        } //5
+        $i++;
+      } //close loop row
+  
+      $exchild_main = rtrim($exchild_main, ',');
+
+      // print_r($exchild_main); die;
+  
+      if ($exchild_main == '' || $exchild_main == null) {
+        $data = array(
+          'para1' => 1,
+          'msg' => 'No Data.',
+        );
+        echo json_encode($data);
+        exit();
+      }
+
+      $insert_main = $this->db->query("INSERT INTO lite_b2b.set_supplier (`supplier_name`,`name_reg`,`acc_code`,`reg_no`,`supplier_guid`,`old_supplier_name`,`isactive`,`gst_no`,`created_at`,`created_by`,`updated_at`,`updated_by`) VALUES $exchild_main ");
+
+      $select_data_supplier = $this->db->query("SELECT a.* FROM lite_b2b.set_supplier a WHERE a.acc_code = 'PENDING' AND a.isactive = '9'");
+
+      foreach($select_data_supplier->result() as $row)
+      {
+        $process_supplier_guid = $row->supplier_guid;
+        $query_supplier_name = addslashes($row->supplier_name);
+        $check_max_acc_code = $this->db->query("SELECT MAX(acc_code) as max_code FROM lite_b2b.set_supplier WHERE acc_code LIKE CONCAT('D', LEFT('$query_supplier_name', 1), '%') AND isactive NOT IN ('9') ")->row('max_code');
+  
+        $get_digits_add_itiration =  $this->db->query("SELECT digits(right('$check_max_acc_code',4)) + 1 as num ")->row('num');
+  
+        $new_acc_code = $this->db->query("SELECT concat('D',LEFT('$query_supplier_name', 1), lpad('$get_digits_add_itiration', '4', '0') ) as new_code ")->row('new_code');
+        //echo $new_acc_code;die;
+  
+        $update_debtor_code = $this->db->query("UPDATE lite_b2b.set_supplier SET acc_code = '$new_acc_code', isactive = '1' WHERE supplier_guid = '$process_supplier_guid' AND isactive = '9' ");
+      }
+  
+      //echo $this->db->last_query(); die;
+  
+      $error = $this->db->affected_rows();
+  
+      if ($error > 0) {
+        $data = array(
+          'para1' => 0,
+          'msg' => 'Successfully Import',
+  
+        );
+        echo json_encode($data);
+      } else {
+        $data = array(
+          'para1' => 1,
+          'msg' => 'Error Import.',
+  
+        );
+        echo json_encode($data);
+      }
+  
+      // }//close else for success upload file
+    } //close file upload
 }
 // (select `d`.`user_id` AS `user_id`,`c`.`supplier_name` AS `supplier_name`,`c`.`reg_no` AS `reg_no`,`b`.`supplier_group_name` AS `supplier_group_name`,`e`.`acc_name` AS `acc_name`,`d`.`user_guid` AS `user_guid`,`c`.`supplier_guid` AS `supplier_guid`,`b`.`supplier_group_guid` AS `supplier_group_guid`,`e`.`acc_guid` AS `acc_guid` from ((((`set_supplier_user_relationship` `a` join `set_supplier_group` `b` on((`a`.`supplier_group_guid` = `b`.`supplier_group_guid`))) join `set_supplier` `c` on((`a`.`supplier_guid` = `c`.`supplier_guid`))) join `get_unique_user` `d` on((`a`.`user_guid` = `d`.`user_guid`))) join `acc` `e` on((`a`.`customer_guid` = `e`.`acc_guid`))) order by `d`.`user_id`,`c`.`supplier_name`) 

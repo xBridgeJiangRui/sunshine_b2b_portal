@@ -132,7 +132,6 @@ class Consignment_b2b_report extends CI_Controller {
                 //$report_template = 'Consignment_Sales_Report_New';
 
                 $report_ip = $this->jasper_ip.'/jasperserver/rest_v2/reports/reports/B2BReports/'.$report_template.'.pdf'.'?Date_From='.$Date_From.'&Date_To='.$Date_To.'&db_be='.$db_be.'&supcode='.$Consign_code.$main_loc;
-
                 // echo $report_ip;die;
                 $url = $report_ip;
                 //echo $url; die;

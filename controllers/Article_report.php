@@ -42,7 +42,7 @@ class Article_report extends CI_Controller
             }
             else
             {
-                $code = $this->db->query("SELECT c.Code,c.Name, '' AS supp_type FROM (SELECT * FROM set_supplier_user_relationship WHERE user_guid = '$user_guid' AND customer_guid = '$customer_guid') a INNER JOIN (SELECT * FROM set_supplier_group WHERE customer_guid = '$customer_guid') b ON a.supplier_group_guid = b.supplier_group_guid INNER JOIN (SELECT * FROM b2b_summary.supcus WHERE consign = 0 AND customer_guid = '$customer_guid' AND type = 'S') c ON b.backend_supcus_guid = c.supcus_guid");
+                $code = $this->db->query("SELECT c.Code,c.Name, '' AS supp_type FROM (SELECT * FROM set_supplier_user_relationship WHERE user_guid = '$user_guid' AND customer_guid = '$customer_guid') a INNER JOIN (SELECT * FROM set_supplier_group WHERE customer_guid = '$customer_guid') b ON a.supplier_group_guid = b.supplier_group_guid INNER JOIN (SELECT * FROM b2b_summary.supcus WHERE customer_guid = '$customer_guid' AND type = 'S') c ON b.backend_supcus_guid = c.supcus_guid");
                 // echo $this->db->last_query();die;
 
                 $location = $this->db->query("SELECT * FROM (SELECT * FROM set_user_branch WHERE user_guid = '$user_guid' AND acc_guid = '$customer_guid' GROUP BY branch_guid) a INNER JOIN (SELECT * FROM acc_branch WHERE isactive = '1' )b ON a.branch_guid = b.branch_guid INNER JOIN (SELECT * FROM b2b_summary.cp_set_branch WHERE customer_guid = '$customer_guid') c ON b.branch_code = c.branch_code ORDER BY b.branch_code ASC"); 
@@ -89,36 +89,35 @@ class Article_report extends CI_Controller
   
       $customer_guid = $this->session->userdata('customer_guid');
       $user_guid = $this->session->userdata('user_guid');
-      $supplier_code = $this->input->post('outright_code');
-      $location = $this->input->post('outright_location');
-      $date_start = $this->input->post('date_start');
-      $date_end = $this->input->post('date_end');
+      $supplier_code = isset($_GET['outright_code']) ? $this->input->get('outright_code') : $this->input->post('outright_code');
+      $location = isset($_GET['outright_location']) ? $this->input->get('outright_location') : $this->input->post('outright_location');
+      $date_start = isset($_GET['date_start']) ? $this->input->get('date_start') : $this->input->post('date_start');
+      $date_end = isset($_GET['date_end']) ? $this->input->get('date_end') : $this->input->post('date_end');
 
       //print_r($date_end); die;
 
-      $location = implode("','",$this->input->post('outright_location'));
+      if(!is_array($location)){
+        $location = explode(',', $location);
+      }
+
+      $location = implode("','",$location);
 
       $database1 = 'lite_b2b';
       $database2 = $this->db->query("SELECT b2b_database FROM $database1.acc WHERE acc_guid = '$customer_guid'")->row('b2b_database');
       $acc_name = $this->db->query("SELECT acc_name FROM $database1.acc WHERE acc_guid = '$customer_guid'")->row('acc_name');
       
-      $query_data = $this->db->query("SELECT 
-      GROUP_CONCAT(a.salestype) AS salestype,
-      a.bizdate,
-      a.location,
-      IFNULL(c.branch_name,'') AS location_name,
-      b.code AS supplier_code,
-      f.supplier_name,
-      a.itemcode,
-      a.barcode,
-      a.description,
-      a.um AS uom,
-      IF(a.consign = '1', 'Consign', 'Outright') AS item_type,
-      SUM(a.packsize) AS total_packsize,
-      SUM(a.qty) AS total_qty,
-      SUM(a.netsales) AS total_netsales,
-      SUM(a.averagecost) AS total_averagecost,
-      SUM(a.lastcost) AS total_lastcost
+      $sql = "SELECT 
+      f.supplier_name AS 'Supplier Name',
+      b.code AS 'Supplier Code',
+      a.bizdate AS 'Biz Date',
+      CONCAT(a.location, ' - ',c.branch_name) AS 'Location',
+      a.itemcode AS 'Item Code',
+      IF(a.consign = '1', 'Consign', 'Outright') AS 'Item Type',
+      a.description AS 'Description',
+      a.barcode AS 'Barcode',
+      SUM(a.qty) AS 'Total Qty',
+      a.um AS 'UOM',
+      SUM(a.netsales) AS 'Total NetSales'
       FROM 
         $database2.`sum_daily_sku_sales` a
         INNER JOIN $database2.`itemmastersupcode` b
@@ -136,10 +135,31 @@ class Article_report extends CI_Controller
       AND b.code = '$supplier_code'
       AND a.location IN ('$location')
       GROUP BY a.bizdate,b.code,a.loc_group,a.um,a.itemcode
-      HAVING total_qty <> 0 
-      ORDER BY a.bizdate ASC ");
+      HAVING `Total Qty` <> 0 
+      ORDER BY a.bizdate ASC ";
+
+      if(isset($_GET['download_excel'])){
+                    
+        $objPHPExcel = $this->excel_model->download_excel($sql);
+
+        $today = $this->db->query("SELECT date(now()) as today")->row('today');
+        // $filename = $today.'.XLSX'; //save our workbook as this file name
+        $fileName = 'Daily Sales By Supplier - '.$today.'.xlsx';
+        header('Content-Type: application/vnd.ms-excel'); //mime type
+        header('Content-Disposition: attachment;filename="'.$fileName.'"'); //tell browser what's the file name
+        header('Cache-Control: max-age=0'); //no cache
+        header("Pragma: no-cache");
+        header("Expires: 0");
+
+        $objWriter = new PHPExcel_Writer_Excel2007($objPHPExcel);
+        ob_end_clean();
+
+        $objWriter->save('php://output'); die;
+      }
 
       //echo $this->db->last_query(); die;
+
+      $query_data = $this->db->query($sql);
 
       $data = array(  
         'query_data' => $query_data->result(),

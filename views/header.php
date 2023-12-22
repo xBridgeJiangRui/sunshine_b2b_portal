@@ -758,6 +758,23 @@ LIMIT 5 ");
               </li>
             <?php } ?>
 
+              <li <?php if (preg_match("/b2b_prdncn/i", $this->uri->segment(1)))
+                    echo 'class="treeview active"'; ?>>
+                <a href="#">
+                  <i class="fa fa-download"></i>
+                  <span>To Download</span>
+                  <span class="pull-right-container">
+                    <i class="fa fa-angle-left pull-right"></i>
+                  </span>
+                </a>
+                <ul class="treeview-menu">
+
+                  <li><a href="<?php echo site_url('b2b_pci') ?>"><i class="fa fa-circle-o"></i>Promotion Claim Tax Invoice (PCI)</a></li>
+                  <li><a href="<?php echo site_url('b2b_di') ?>"><i class="fa fa-circle-o"></i>Display Incentive Tax Invoice (DI)</a></li>
+
+                </ul>
+              </li>
+
             <?php if (in_array('VTDPPANEL_remove', $_SESSION['module_code'])) {
             ?>
               <li <?php if (preg_match("/panda_pdncn/i", $this->uri->segment(1)) || preg_match("/panda_pci/i", $this->uri->segment(1)) ||  preg_match("/panda_di/i", $this->uri->segment(1)))
@@ -923,15 +940,18 @@ LIMIT 5 ");
                       </a>
                     </li>
                   <?php }; ?>
+
+                  <?php if($this->session->userdata('user_group_name') != 'CONSIGNMENT_GROUP'){ ?>
+                    <li class="treeview">
+                      <a href="<?php echo site_url('Article_report/report') ?>?report_type=supplier_daily_inventory">
+                        <i class="fa fa-circle-o"></i>
+                        <span>Supplier Daily Inventory</span>
+                        <span class="pull-right-container">
+                        </span>
+                      </a>
+                    </li>
+                  <?php } ?>
                   
-                  <li class="treeview">
-                    <a href="<?php echo site_url('Article_report/report') ?>?report_type=supplier_daily_inventory">
-                      <i class="fa fa-circle-o"></i>
-                      <span>Supplier Daily Inventory</span>
-                      <span class="pull-right-container">
-                      </span>
-                    </a>
-                  </li>
                   <li class="treeview">
                     <a href="<?php echo site_url('Article_report/report') ?>?report_type=supplier_article_information_query">
                       <i class="fa fa-circle-o"></i>
@@ -940,6 +960,7 @@ LIMIT 5 ");
                       </span>
                     </a>
                   </li>
+
                 </ul> 
               </li> 
             <?php }; ?>
@@ -994,7 +1015,7 @@ LIMIT 5 ");
                         </span>
                       </a>
                     </li>
-
+                    
                     <li class="treeview">
                       <a href="<?php echo site_url('Consignment_b2b_report?link=consignment_sales_report_summary_b2b') ?>">
                         <i class="fa fa-circle-o"></i>
@@ -1171,7 +1192,8 @@ LIMIT 5 ");
                   <?php
                   }
                   ?>
-                  <!-- <?php
+
+                  <?php
                   if (in_array('VTS', $_SESSION['module_code'])) {
                   ?>
                     <li class="treeview">
@@ -1184,7 +1206,7 @@ LIMIT 5 ");
                     </li>
                   <?php
                   }
-                  ?> -->
+                  ?>
 
                   <?php
                   if (in_array('VSUP', $_SESSION['module_code'])) {
@@ -1225,22 +1247,6 @@ LIMIT 5 ");
                   ?>
 
                   <?php
-                  if (in_array('IAVA', $_SESSION['module_code'])) {
-                  ?>
-                    <li class="treeview">
-                      <a href="<?php echo site_url('Pending_document') ?>">
-                        <i class="fa fa-file"></i>
-                        <span>Backend Pending Document</span>
-                        <span class="pull-right-container">
-                        </span>
-                      </a>
-                    </li>
-                  <?php
-                  }
-                  ?>
-
-                  <!-- 
-                  <?php
                   if (in_array('VSUP', $_SESSION['module_code'])) {
                   ?>
                     <li class="treeview">
@@ -1255,6 +1261,23 @@ LIMIT 5 ");
                   }
                   ?>
 
+                  <?php
+                  if (in_array('VSUP', $_SESSION['module_code'])) {
+                  ?>
+                    <li class="treeview">
+                      <a href="<?php echo site_url('Troubleshoot_grn') ?>?customer_guid=<?php echo $_SESSION['customer_guid'] ?>">
+                        <i class="fa fa-truck"></i>
+                        <span>Troubleshoot GRN</span>
+                        <span class="pull-right-container">
+                          <!-- <i class="fa fa-angle-left pull-right"></i> -->
+                        </span>
+                      </a>
+                    </li>
+                  <?php
+                  }
+                  ?>
+                  
+                  <!--
                   <?php
                   if (in_array('VSUP', $_SESSION['module_code'])) {
                   ?>
@@ -1286,6 +1309,7 @@ LIMIT 5 ");
                   <?php
                   }
                   ?>
+-->
 
                   <?php
                   if (in_array('IAVA', $_SESSION['module_code'])) {
@@ -1310,6 +1334,23 @@ LIMIT 5 ");
                   <?php
                   }
                   ?>
+
+                  <?php
+                  if (in_array('IAVA', $_SESSION['module_code'])) {
+                  ?>
+                    <li class="treeview">
+                      <a href="<?php echo site_url('Pending_document') ?>">
+                        <i class="fa fa-file"></i>
+                        <span>Backend Pending Document</span>
+                        <span class="pull-right-container">
+                        </span>
+                      </a>
+                    </li>
+                  <?php
+                  }
+                  ?>
+
+<!--
 
                   <?php
                   if (in_array('IAVA', $_SESSION['module_code'])) {
@@ -1355,6 +1396,40 @@ LIMIT 5 ");
             <?php
             }
             ?>
+
+            <?php
+            if (in_array('VREP', $_SESSION['module_code'])) {
+            ?>
+
+              <li <?php if (preg_match("/Report_controller/i", $this->uri->segment(1))  ||  preg_match("/Report_controller/i", $this->uri->segment(1)))
+                    echo 'class="treeview active"'; ?>>
+                <a href="#">
+                  <i class="fa fa-file"></i>
+                  <span>Report</span>
+                  <span class="pull-right-container">
+                    <i class="fa fa-angle-left pull-right"></i>
+                  </span>
+                </a>
+                <ul class="treeview-menu">
+
+                  <?php $find_title = $this->db->query("SELECT * FROM lite_b2b.`set_report_query` WHERE report_type = 'excel' AND active = '1' ORDER BY seq"); ?>
+                  <?php foreach ($find_title->result() as $row) {  ?>
+                    <li class="treeview">
+                      <a href="<?php echo site_url('Report_controller/gen_rep?report_id=' . $row->report_id);  ?>">
+                        <i class="fa fa-file-excel-o"></i>
+                        <span><?php echo $row->report_name ?></span>
+                        <span class="pull-right-container">
+                          <!-- <i class="fa fa-angle-left pull-right"></i> -->
+                        </span>
+                      </a>
+                    </li>
+                  <?php } ?>
+                  <!-- nothing below for this section -->
+                </ul>
+              </li>
+
+            <?php } ?>
+
             <?php if (in_array('CUSADMIN', $_SESSION['module_code'])) { ?>
 
               <li <?php if (preg_match("/CusAdmin_controller/i", $this->uri->segment(2)))
@@ -1588,6 +1663,15 @@ LIMIT 5 ");
                     </a>
                   </li>
 
+                  <li class="treeview">
+                    <a href="<?php echo site_url('Consignment') ?>">
+                      <i class="fa fa-file-text"></i>
+                      <span>Consignment Process</span>
+                      <span class="pull-right-container">
+                      </span>
+                    </a>
+                  </li>
+
                   <!-- <li class="treeview">
                     <a href="<?php echo site_url('Export_controller/main') ?>">
                       <i class="fa fa-file-excel-o"></i>
@@ -1634,23 +1718,17 @@ LIMIT 5 ");
       <!-- invoice details -->
       <?php if (in_array('VIB', $_SESSION['module_code'])) {
       ?>
-        <!-- <li class="treeview">
+        <li class="treeview">
           <a href="#">
             <i class="fa fa-inbox">
-              <?php if ($_SESSION['user_group_name'] == "SUPER_ADMIN" || $_SESSION['user_group_name'] == 'CUSTOMER_ADMIN_TESTING_USE') { ?>
-                <?php $slip_new_count = $this->db->query("SELECT * FROM (SELECT a.`slip_guid` AS subs_guid FROM lite_b2b.`invoice_slip` a INNER JOIN b2b_invoice.`supplier_monthly_main` b ON a.`invoice_number` = b.`invoice_number` WHERE a.`status` = 'Uploaded' AND b.`inv_status` = 'Emailed' UNION ALL SELECT a.`slip_guid` AS reg_guid FROM lite_b2b.`invoice_slip` a INNER JOIN b2b_invoice.`inv_doc` b ON a.`invoice_number` = b.`invoice_number` WHERE a.`status` = 'Uploaded' AND b.`inv_status` = 'Emailed' )aa")->num_rows(); ?>
-                <?php if ($slip_new_count != '0') { ?>
-                  <span class="label label-danger" style="padding: 3px;right: 0;position: absolute;"><?php echo $slip_new_count ?></span>
-                <?php } ?>
-              <?php } ?>
             </i>
-            <span>B2B Monthly Billing Invoices</span>
+            <span>Monthly Billing Invoices</span>
             <span class="pull-right-container">
               <i class="fa fa-angle-left pull-right"></i>
             </span>
           </a>
           <ul class="treeview-menu">
-            <?php if (in_array('VIBDBR', $_SESSION['module_code'])) {
+            <!-- <?php if (in_array('VIBDBR', $_SESSION['module_code'])) {
             ?>
               <li class="treeview">
                 <a href="<?php echo site_url('b2b_billing_invoice_controller/invoices_break') ?>">
@@ -1662,8 +1740,9 @@ LIMIT 5 ");
               </li>
             <?php
               }
-            ?>
-            <?php if ($_SESSION['user_group_name'] != "CUSTOMER_ADMIN" && $_SESSION['user_group_name'] != "CUSTOMER_ADMIN_NO_HIDE" && $_SESSION['user_group_name'] != "CUSTOMER_CLERK" && $_SESSION['user_group_name'] != "CUSTOMER_ADMIN_FINANCE") { ?>
+            ?> -->
+            <!-- remark && $_SESSION['user_group_name'] != "CUSTOMER_ADMIN_FINANCE" only in sunshine need include -->
+            <?php if ($_SESSION['user_group_name'] != "CUSTOMER_ADMIN" && $_SESSION['user_group_name'] != "CUSTOMER_ADMIN_NO_HIDE" && $_SESSION['user_group_name'] != "CUSTOMER_CLERK" ) { ?>
               <li class="treeview">
                 <a href="<?php echo site_url('b2b_billing_invoice_controller/invoices_new') ?>">
                   <i class="fa fa-circle-o"></i>
@@ -1673,7 +1752,7 @@ LIMIT 5 ");
                 </a>
               </li>
             <?php } ?>
-            <li class="treeview">
+            <!-- <li class="treeview">
               <a href="<?php echo site_url('b2b_billing_invoice_controller/invoices_detail?type=invoices_detail') ?>">
                 <i class="fa fa-circle-o"></i>
                 <span>Invoice Break Down</span>
@@ -1706,9 +1785,9 @@ LIMIT 5 ");
               </li>
             <?php
               }
-            ?>
+            ?> -->
           </ul>
-        </li> -->
+        </li>
       <?php
       }
       ?>
@@ -1830,7 +1909,7 @@ LIMIT 5 ");
                 <span>Online Registration Application</span>
               </a>
             </li>
-            <!-- <?php if ($_SESSION['user_group_name'] == "SUPER_ADMIN") { ?>
+             <?php if ($_SESSION['user_group_name'] == "SUPER_ADMIN") { ?>
               <li class="treeview">
                 <a href="<?php echo site_url('Registration_new/register_vendor') ?>">
                   <i class="fa fa-circle-o"></i>
@@ -1845,7 +1924,8 @@ LIMIT 5 ");
                   <span>User Account Creation Form</span>
                 </a>
               </li>
-
+            
+            <!--
               <li class="treeview">
                 <a href="<?php echo site_url('Training_user/training_admin') ?>">
                   <i class="fa fa-circle-o"></i>

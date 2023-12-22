@@ -39,6 +39,8 @@
             <div class="box-tools pull-right">
               <!-- <a href="<?php echo site_url('supplier_setup_new/create') ?>"><button class="btn btn-xs btn-primary" ><i class="glyphicon glyphicon-plus"></i> Create</button></a> -->
 
+              <button id="import_attribute" type="button" class="btn btn-xs btn-primary"><i class="glyphicon glyphicon-plus" aria-hidden="true" ></i> Import Create Supplier</button>
+
               <button title="Create" onclick="reg_supplier()" type="button" class="btn btn-xs btn-primary" data-toggle="modal" data-target="#regsupplier" data-table="<?php echo 'set_supplier' ?>" data-mode="<?php echo 'create' ?>"><i class="glyphicon glyphicon-plus"></i>Create</button>
 
               <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
@@ -937,7 +939,129 @@
     }
     ?>
 
+    $(document).on('click','#import_attribute',function(){
+      var modal = $("#medium-modal").modal();
 
+      modal.find('.modal-title').html('Import File');
+
+      methodd = '';
+
+      methodd +='<div id="myDropZone" class="dropzone" style="height:20px;"><center><label class="vertical-center" id="output" for="upload_file">Select a file to continue</label></center> </div>';
+
+      methodd += '<div class="row" style="padding-top:10px;">';
+      methodd += '<form id="excel_file_form">';
+      methodd += '<div class="col-md-6">';
+      methodd += '<label for="upload_file" class="btn btn-block btn-primary">Select File</label>';
+      methodd += '</div>';
+      methodd += '<div class="col-md-6" style="margin-bottom:10px;">';
+      methodd += '<button type="button" class="btn btn-block btn-danger" id="reset_input">Reset</button>';
+      methodd += '</div>';
+      methodd += '<div class="col-md-6">';
+      methodd += '<input type="file" name="photo" id="upload_file" accept=".xls,.xlsx,.csv" style="margin-right:50px;"/>';
+      methodd += '</div>';
+      methodd += '</form>';
+      methodd += '</div>';
+
+      methodd_footer = '<p class="full-width"><span class="pull-right"><input name="sendsumbit" type="button" class="btn btn-default" data-dismiss="modal" value="Close"> </span></p>';
+
+      modal.find('.modal-footer').html(methodd_footer);
+      modal.find('.modal-body').html(methodd);
+    });//close import
+
+    $(document).on('change','#upload_file',function(e){
+
+      var fileName = e.target.files[0].name;
+
+      if(fileName != '')
+      { 
+        $('#submit_button').remove();
+
+        $('#excel_file_form').append('<div class="col-md-12" ><button type="button" id="submit_button" class="btn btn-block btn-success" style="margin-top:10px;">Submit</button></div>');
+
+        $('#output').html(fileName);
+
+      }
+      else
+      { 
+        $('#output').html('No files selected');
+        $('#submit_button').remove();
+      }
+    });//close upload file
+
+    $(document).on('click','#reset_input',function(){
+
+      $('#upload_file').val('');
+
+      var file = $('#upload_file')[0].files[0];
+
+      if(file === undefined)
+      {
+        $('#output').html('No files selected');
+          $('#submit_button').remove();
+      }
+      else
+      { 
+        var fileName = file.name;
+
+        $('#submit_button').remove();
+
+          $('#excel_file_form').append('<button type="button" class="btn btn-block btn-success" id="submit_button" style="margin-top:10px;">Submit</button>');
+
+          $('#output').html(fileName);
+      }
+    });//close reset_input
+
+    $(document).on('click','#submit_button',function(){
+
+      confirmation_modal('Are you sure want to Submit?');
+
+      $(document).off('click', '#confirmation_yes').on('click', '#confirmation_yes', function(){
+
+        var formData = new FormData();
+        formData.append('file', $('#upload_file')[0].files[0]);
+
+        $.ajax({
+            url:"<?= site_url('Supplier_setup_new/file_upload');?>",
+            method:"POST",
+            data: formData,
+            processData: false, // Don't process the files
+            contentType: false, // Set content type to false as jQuery will tell the server its a query string request
+            beforeSend : function()
+            { 
+              $('.btn').button('loading');
+            },
+            complete : function()
+            { 
+              $('.btn').button('reset');
+            },
+            success:function(data)
+            {
+              json = JSON.parse(data);
+              $('#alertmodal').modal('hide');
+              if (json.para1 == 'false') {
+                alert(json.msg);
+                //alert(json.msg.replace(/\\n/g,"\n"));
+                $('.btn').button('reset');
+                $('#upload_file').val('');
+                $('#output').html('No files selected');
+                $('#submit_button').remove();
+
+              }else{
+
+                $('#medium-modal').modal('hide');
+                $('#alertmodal').modal('hide');
+                alert(json.msg.replace(/\\n/g,"\n"));
+                location.reload();
+                // setTimeout(function() {
+                // $('#upload_file').val('');
+                // $('#output').html('No files selected');
+                // $('#submit_button').remove();
+                // }, 300);
+            }//close else
+          }//close success
+        });//close ajax
+      });//close document yes click
+    });//close submit_button
 
 
   }); //close document ready

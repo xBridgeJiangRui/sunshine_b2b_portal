@@ -19,7 +19,7 @@ class login_model extends CI_Model
         INNER JOIN set_module_group e ON e.`module_group_guid`= d.`module_group_guid` 
         AND e.`module_group_guid` = a.`module_group_guid`
         WHERE a.user_id = '$userid' AND a.`user_password` = md5('$password') 
-        AND c.`isenable` = 1 AND module_group_name in ('Panda B2B')");
+        AND c.`isenable` = 1 AND module_group_name in ('Panda B2B') ORDER BY a.isactive DESC");
 
         return $query;
     }

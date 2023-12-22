@@ -500,33 +500,85 @@ class Ticket extends CI_Controller
 
             $user_group = $_SESSION['user_group_name'];
 
+            // new add 07-12-2023
+            if ( $user_group == 'SUPER_ADMIN') {
+
+                $ticket_hide = '1';
+
+                $data = array(
+
+                    'ticket_guid' => $ticket_guid,
+                    'ticket_number' => $ticket_number,
+                    'topic_guid' => $topic_guid,
+                    'acc_guid' => $acc_guid,
+                    'supplier_guid' => $supplier_guid,
+                    'sub_topic_guid' => $sub_topic_guid,
+                    'details' => $messages,
+                    'created_at' => $created_at,
+                    'created_by' => $_SESSION['user_guid'],
+                    'ticket_status' => 'New',
+                    'ticket_file' => implode(',', $filename),
+                    'ticket_path' => implode(',', $paths),
+                    'assigned' => $assigned_guid,
+                    'hide' => $ticket_hide,
+    
+                );
+
+                $this->db->insert('ticket', $data);
+
+            } else {
+
+                $ticket_hide = '0';
+
+                $data = array(
+
+                    'ticket_guid' => $ticket_guid,
+                    'ticket_number' => $ticket_number,
+                    'topic_guid' => $topic_guid,
+                    'acc_guid' => $acc_guid,
+                    'supplier_guid' => $supplier_guid,
+                    'sub_topic_guid' => $sub_topic_guid,
+                    'details' => $messages,
+                    'created_at' => $created_at,
+                    'created_by' => $_SESSION['user_guid'],
+                    'ticket_status' => 'New',
+                    'ticket_file' => implode(',', $filename),
+                    'ticket_path' => implode(',', $paths),
+                    'hide' => $ticket_hide,
+    
+                );
+
+                $this->db->insert('ticket', $data);
+
+            }
+
             if ( $user_group== 'SUPER_ADMIN') {
                 $messages_type = 'A';
             } else {
                 $messages_type = 'U';
             }
             // print_r($filename);die;
-            $data = array(
+            // $data = array(
 
-                'ticket_guid' => $ticket_guid,
-                'ticket_number' => $ticket_number,
-                'topic_guid' => $topic_guid,
-                'acc_guid' => $acc_guid,
-                'supplier_guid' => $supplier_guid,
-                'sub_topic_guid' => $sub_topic_guid,
-                'details' => $messages,
-                'created_at' => $created_at,
-                'created_by' => $_SESSION['user_guid'],
-                'ticket_status' => 'New',
-                'ticket_file' => implode(',', $filename),
-                'ticket_path' => implode(',', $paths),
-                'assigned' => $assigned_guid,
+            //     'ticket_guid' => $ticket_guid,
+            //     'ticket_number' => $ticket_number,
+            //     'topic_guid' => $topic_guid,
+            //     'acc_guid' => $acc_guid,
+            //     'supplier_guid' => $supplier_guid,
+            //     'sub_topic_guid' => $sub_topic_guid,
+            //     'details' => $messages,
+            //     'created_at' => $created_at,
+            //     'created_by' => $_SESSION['user_guid'],
+            //     'ticket_status' => 'New',
+            //     'ticket_file' => implode(',', $filename),
+            //     'ticket_path' => implode(',', $paths),
+            //     'assigned' => $assigned_guid,
 
-            );
+            // );
 
            //print_r($data);die;
 
-            $this->db->insert('ticket', $data);
+           // $this->db->insert('ticket', $data);
 
              $ticket_c_guid = $this->db->query("SELECT REPLACE(UPPER(UUID()),'-','') AS guid")->row('guid');
 
@@ -773,6 +825,207 @@ class Ticket extends CI_Controller
 
           }
 
+          
+          echo "<script> document.location='" . base_url() . "index.php/Ticket/details?t_g=".$ticket_guid."' </script>";
+
+      }
+
+      else
+      {
+          redirect('#');
+      }
+    }
+
+    public function ticket_internal_note_send()
+    {
+      if($this->session->userdata('loginuser') == true && $this->session->userdata('userid') != '' && $_SESSION['user_logs'] == $this->panda->validate_login())
+      {   
+
+          $ticket_guid = $this->input->post('ticket_guid');
+
+          $link = site_url('Ticket/details?t_g=').$ticket_guid;
+
+          $notification_guid1 = $this->db->query("SELECT REPLACE(UPPER(UUID()),'-','') AS guid")->row('guid');
+
+          $ticket = $this->db->query("SELECT * FROM ticket WHERE ticket_guid = '$ticket_guid' ");
+
+          $created_by = $ticket->row('created_by');
+
+          $message = 'New messages for ticket '.$ticket->row('ticket_number');
+
+          $ticket_c_guid = $this->db->query("SELECT REPLACE(UPPER(UUID()),'-','') AS guid")->row('guid');
+
+
+          //cannnot addslashes because imagebase64 will not show
+          /*$messages = addslashes($this->input->post('messages'));*/
+
+          $messages = $this->input->post('messages');
+
+          $created_at = $this->db->query("SELECT now() as now")->row('now');
+
+          $user_group = $_SESSION['user_group_name'];
+
+          $user_guid = $_SESSION['user_guid'];
+
+          $assigned = $ticket->row('assigned');
+
+          $acc_guid = $ticket->row('acc_guid');
+
+          $supplier_guid = $ticket->row('supplier_guid');
+
+          $file = $this->input->post('myFile1');
+
+          //$countfiles = count($file);
+
+          $file_path = $this->db->query("SELECT file_path FROM acc WHERE acc_guid = '$acc_guid'")->row('file_path');
+
+          $file_guid = $this->db->query("SELECT REPLACE(UPPER(UUID()),'-','') AS guid")->row('guid');
+
+          $path = $file_path;
+
+         //print_r($_FILES);die;
+           if(isset($_POST['submit']) && $_FILES['myFile1']){
+
+
+
+              $paths1 = array();
+              $filename1 = array();
+   
+              // Count total files
+              $countfiles = count($_FILES['myFile1']['name']);
+
+              // Looping all files
+              for($i=0;$i<$countfiles;$i++){
+
+                  if ($_FILES['myFile1']['name'][0] != "") {
+
+                      $filename1[] = $file.$_FILES['myFile1']['name'][$i];
+
+                     
+                      //$paths1[] = $file.$_FILES['file']['name'][$i];
+                      /*echo $_SERVER['SERVER_NAME'];die;*/
+                      /*$path = base_url('asset/manual_guide/').$filename;*/
+                     $file_path = $this->db->query("SELECT file_path FROM acc WHERE acc_guid = '$acc_guid'")->row('file_path');
+                     $path = './ticket'.$file_path.'/'.$supplier_guid.'/'.$file_guid.'-'.$filename1[$i];
+                     
+
+                     $path1 = $path;
+                          // Upload file
+                      $paths1[] = $path;
+
+                       
+                       if (!file_exists('./ticket'.$file_path.'/'.$supplier_guid)) {
+         
+                         mkdir('./ticket'.$file_path.'/'.$supplier_guid, 0777, true); 
+          
+
+                       };
+                      move_uploaded_file($_FILES['myFile1']['tmp_name'][$i],$path1);
+
+                      //print_r($path1);die;
+                      
+                  }
+
+                  else
+                  {
+                     //echo 'Error in uploading file - '.$_FILES['myFile']['name'][$i].'<br/>';
+                  }
+                  
+              }
+          }
+       
+          
+          $ticket_child = $this->db->query("SELECT a.created_by FROM ticket_child a WHERE a.ticket_guid = '$ticket_guid' AND a.created_by != '$user_guid' AND a.created_by != '$assigned' GROUP BY a.created_by")->result();
+
+
+          foreach ($ticket_child as $key) {
+
+              $notification_guid = $this->db->query("SELECT REPLACE(UPPER(UUID()),'-','') AS guid")->row('guid');
+              $data = array(
+
+                  'notification_guid' => $notification_guid,
+                  'user_guid' => $key->created_by,
+                  'icon' => 'ticket',
+                  'message' => $message,
+                  'link' => $link,
+                  'created_at' => $created_at,
+                  'status' => 0,
+                  //'acc_guid' => $acc_guid,
+                  //'supplier_guid' => $supplier_guid,
+                  //'ticket_file' => implode(',', $filename1),
+                  //'ticket_path' =>  implode(',', $path22)
+                  
+                  
+              );
+             //print_r($data);die;
+              $this->db->insert('notifications', $data);
+          }
+
+          
+
+
+
+          if ( isset($assigned ) && $user_guid != $assigned )  {
+              
+
+              $data = array(
+
+                  'notification_guid' => $notification_guid1,
+                  'user_guid' => $assigned,
+                  'icon' => 'ticket',
+                  'message' => $message,
+                  'link' => $link,
+                  'created_at' => $created_at,
+                  'status' => 0,
+                  //'acc_guid' => $acc_guid,
+                  //'supplier_guid' => $supplier_guid,
+                  //'ticket_file' => implode(',', $filename1),
+                  //'ticket_path' =>  implode(',', $path22)
+                  
+
+              );
+             
+              $this->db->insert('notifications', $data);
+
+          }
+
+          if ( $user_group == 'SUPER_ADMIN') {
+
+              $messages_type = 'A';
+              $ticket_status = 'In-Progress';
+              $hide = '1';
+
+              $data = array(
+
+                  'ticket_c_guid' => $ticket_c_guid,
+                  'ticket_guid' => $ticket_guid,
+                  'messages' => $messages,
+                  'hide' => $hide,
+                  'created_at' => $created_at,
+                  'created_by' => $user_guid,
+                  'messages_type' => $messages_type,
+                  'acc_guid' => $acc_guid,
+                  'supplier_guid' => $supplier_guid,
+                  'ticket_file' => implode(',', $filename1),
+                  'ticket_path' =>  implode(',', $paths1),
+
+
+              );
+
+               //print_r($data);die;
+
+              $this->db->insert('ticket_child', $data);
+
+              $data = array(
+                      'ticket_status' => $ticket_status
+              );
+             
+
+              $this->db->where('ticket_guid', $ticket_guid);
+              $this->db->update('ticket', $data);
+
+
+          } 
           
           echo "<script> document.location='" . base_url() . "index.php/Ticket/details?t_g=".$ticket_guid."' </script>";
 

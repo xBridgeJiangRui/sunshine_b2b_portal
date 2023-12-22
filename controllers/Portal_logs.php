@@ -136,8 +136,22 @@ class Portal_logs extends CI_Controller {
           //print_r($inv_data); die;
           $date_trans_consign = "LEFT(DATE_ADD('$inv_date', INTERVAL - 1 MONTH), 7)";
           //$date_trans_curdate = date('Y-m-d', strtotime("+1 month -3Day", strtotime($inv_date)));
-          $date_trans_from_curdate = $this->db->query("SELECT DATE_FORMAT(NOW(), '%Y-%m-01 00:00:00') AS now_time")->row('now_time');
-          $date_trans_curdate = $this->db->query("SELECT DATE_FORMAT(DATE_ADD(NOW(),INTERVAL - 1 DAY), '%Y-%m-%d 23:59:59') AS now_time")->row('now_time');
+
+          $check_date = $this->db->query("SELECT DATE_FORMAT(NOW(), '%d') AS now_time")->row('now_time');
+
+          if($check_date == '1')
+          {
+            $date_trans_from_curdate = $this->db->query("SELECT DATE_FORMAT(LAST_DAY(DATE_ADD(NOW(), INTERVAL - 1 MONTH)),'%Y-%m-%d 00:00:00') AS now_time")->row('now_time');
+            $date_trans_curdate = $this->db->query("SELECT DATE_FORMAT(DATE_ADD(NOW(),INTERVAL - 1 DAY), '%Y-%m-%d 23:59:59') AS now_time")->row('now_time');
+          }
+          else
+          {
+            $date_trans_from_curdate = $this->db->query("SELECT DATE_FORMAT(NOW(), '%Y-%m-01 00:00:00') AS now_time")->row('now_time');
+            $date_trans_curdate = $this->db->query("SELECT DATE_FORMAT(DATE_ADD(NOW(),INTERVAL - 1 DAY), '%Y-%m-%d 23:59:59') AS now_time")->row('now_time');
+          }
+
+          //$date_trans_from_curdate = $this->db->query("SELECT DATE_FORMAT(NOW(), '%Y-%m-01 00:00:00') AS now_time")->row('now_time');
+          //$date_trans_curdate = $this->db->query("SELECT DATE_FORMAT(DATE_ADD(NOW(),INTERVAL - 1 DAY), '%Y-%m-%d 23:59:59') AS now_time")->row('now_time');
           // $db_supplier_monthly_main = 'supplier_monthly_main';
           // $db_supplier_monthly_child = 'supplier_monthly_child';
           $db_supplier_monthly_main = 'supplier_monthly_main_staging';

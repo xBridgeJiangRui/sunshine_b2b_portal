@@ -224,7 +224,7 @@ $(function() {
 
 
 $(function() {
-  mend = '<?php echo date('Y-m-t', strtotime(date('Y-m-d') . " - 31 days"));?>';
+  mend = '<?php echo date('Y-m-t', strtotime(date('Y-m-d') . " - 30 days"));?>';
   $('input[name="consign_to"]').daterangepicker({
     locale: {
       format: 'YYYY-MM-DD'

@@ -11,6 +11,11 @@
 {
   text-align: left;
 }
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice
+{
+  background: #3c8dbc;
+}   
 </style>
 
 <div class="content-wrapper" style="min-height: 525px; text-align: justify;">
@@ -29,7 +34,7 @@
                     <div class="box-body">
                         <div class="col-md-12">
                             <div class="row">
-                                <div class="col-md-2"><b>Slip Status</b></div>
+                                <!-- <div class="col-md-2"><b>Slip Status</b></div>
                                   <div class="col-md-4">
                                       <select id="select_status_data" class="form-control select2">
                                           <option value="" selected="">-STATUS-</option>
@@ -37,7 +42,7 @@
                                       </select>
                                 </div>
 
-                                <div class="clearfix"></div><br>
+                                <div class="clearfix"></div><br> -->
 
                                 <div class="col-md-2"><b>Supplier Name</b></div>
                                   <div class="col-md-4">
@@ -52,10 +57,10 @@
 
                                   <div class="clearfix"></div><br>
 
-                                  <div class="col-md-2"><b>Period Code</b></div>
+                                  <div class="col-md-2"><b>Invoice Date (Period Code)</b></div>
                                   <div class="col-md-4">
-                                      <select id="select_period_code" class="form-control select2">
-                                          <option value="" selected="">-PERIOD CODE-</option>
+                                      <select id="select_period_code" class="form-control select2" multiple="mutliple">
+                                          <!-- <option value="" selected="">-PERIOD CODE-</option> -->
                                           <?php foreach ($get_period_code->result() as $row) { ?>
                                               <option value="<?php echo $row->period_code ?>">
                                                 <?php echo $row->period_code; ?> </option>
@@ -81,7 +86,7 @@
             <div class="col-md-12">
                 <div class="box box-default">
                     <div class="box-header with-border">
-                        <h3 class="box-title"><b>B2B Billing Invoices</b></h3> &nbsp;
+                        <h3 class="box-title"><b>Billing Invoices</b></h3> &nbsp;
                         <div class="box-tools pull-right">
                             <!-- <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button> -->
                         </div>
@@ -93,14 +98,15 @@
                             <tr>
                             <th >Name</th> 
                             <th >Invoice Number</th>
-                            <th >Year-Month</th>
-                            <th >Invoice Status</th>
+                            <th >Invoice Date</th>
+                            <th >CN Invoice Number</th>
+                            <!-- <th >Invoice Status</th> -->
                             <th >Total Amount</th>
                             <th >Created At</th>
-                            <th >Variance</th>
+                            <!-- <th >Variance</th>
                             <th >Slip Status</th>
-                            <th >Action</th>
-                            <th >Sorting</th>
+                            <th >Action</th> -->
+                            <!-- <th >Sorting</th> -->
                             </tr>
                           </thead>
                           <tbody> 
@@ -181,9 +187,9 @@ $(document).ready(function () {
         $('#ttable').DataTable({
           "columnDefs": [
           <?php if ($_SESSION['user_group_name'] == "SUPER_ADMIN" || $_SESSION['user_group_name'] == 'CUSTOMER_ADMIN_TESTING_USE') { ?>
-            { visible: false, targets: [9]},
+            // { visible: false, targets: [5]},
           <?php } else { ?>
-            { visible: false, targets: [6,9]},
+            // { visible: false, targets: [5]},
           <?php } ?>
           //{"targets": 7 ,"orderable": false},
           { className: "alignright", targets: [4] },
@@ -233,8 +239,20 @@ $(document).ready(function () {
               return element;
        
             }},
-            { "data" : "period_code" },
-            { "data" : "inv_status" },
+            { "data" : "invoice_date" },
+            { "data" : "cn_inv_no" ,render:function( data, type, row ){
+
+              var element = '';
+
+              if(data != '' && data != null && data != 'null')
+              {
+                element += '<a target="framename" href="<?php echo site_url('Invoice/view_report_cn?inv_guid=');?>'+row['cn_inv_guid']+'&inv_number='+row['cn_inv_no']+'"> '+data+'';
+              }
+              
+              return element;
+
+            }},
+            // { "data" : "inv_status" },
             { "data" : "total_include_tax" ,render:function( data, type, row ){
 
               var element = '';
@@ -253,72 +271,72 @@ $(document).ready(function () {
        
             }},
             { "data" : "created_at" },
-            { "data" : "variance_status" },
-            { "data" : "file_status" },
-            { "data" : "sorting_two" ,render:function( data, type, row ){
+            // { "data" : "variance_status" },
+            // { "data" : "file_status" },
+            // { "data" : "sorting_two" ,render:function( data, type, row ){
 
-              var element = '';
-              var element1 = row['final_amount'];
-              var element2 = row['file_status'];
-              var element3 = row['inv_status'];
+            //   var element = '';
+            //   var element1 = row['final_amount'];
+            //   var element2 = row['file_status'];
+            //   var element3 = row['inv_status'];
 
-              if((element3 != 'Paid') && (element3 != 'cn' || element3 != 'CN'))
-              {
-                if((element2 == 'Uploaded') || (element2 == 'Processed'))
-                {
-                  element += '<button id="view_btn" type="button" style="margin-right:5px;" title="VIEW" class="btn btn-xs btn-info view" inv_guid="'+row['inv_guid']+'" invoice_number="'+row['invoice_number']+'" supplier_guid="'+row['biller_guid']+'" file_status="'+row['file_status']+'" slip_created_at="'+row['slip_created_at']+'" slip_created_by="'+row['slip_created_by']+'"><i class="fa fa-eye"></i></button>';
-                }
+            //   if((element3 != 'Paid') && (element3 != 'cn' || element3 != 'CN'))
+            //   {
+            //     if((element2 == 'Uploaded') || (element2 == 'Processed'))
+            //     {
+            //       element += '<button id="view_btn" type="button" style="margin-right:5px;" title="VIEW" class="btn btn-xs btn-info view" inv_guid="'+row['inv_guid']+'" invoice_number="'+row['invoice_number']+'" supplier_guid="'+row['biller_guid']+'" file_status="'+row['file_status']+'" slip_created_at="'+row['slip_created_at']+'" slip_created_by="'+row['slip_created_by']+'"><i class="fa fa-eye"></i></button>';
+            //     }
 
-                if(element2 != 'Processed')
-                {
-                  element += '<button id="upload_btn" type="button" style="margin-right:5px;" title="UPLOAD" class="btn btn-xs btn-warning" inv_guid="'+row['inv_guid']+'" invoice_number="'+row['invoice_number']+'" supplier_guid="'+row['biller_guid']+'" ><i class="fa fa-upload"></i></button>';
+            //     if(element2 != 'Processed')
+            //     {
+            //       element += '<button id="upload_btn" type="button" style="margin-right:5px;" title="UPLOAD" class="btn btn-xs btn-warning" inv_guid="'+row['inv_guid']+'" invoice_number="'+row['invoice_number']+'" supplier_guid="'+row['biller_guid']+'" ><i class="fa fa-upload"></i></button>';
 
-                  if(element2 == 'Uploaded')
-                  {
-                    element += '<button id="delete_btn" type="button"  title="REMOVE" class="btn btn-xs btn-danger" inv_guid="'+row['inv_guid']+'" invoice_number="'+row['invoice_number']+'" supplier_guid="'+row['biller_guid']+'" ><i class="fa fa-trash"></i></button>';
-                  }
-                }
+            //       if(element2 == 'Uploaded')
+            //       {
+            //         element += '<button id="delete_btn" type="button"  title="REMOVE" class="btn btn-xs btn-danger" inv_guid="'+row['inv_guid']+'" invoice_number="'+row['invoice_number']+'" supplier_guid="'+row['biller_guid']+'" ><i class="fa fa-trash"></i></button>';
+            //       }
+            //     }
 
-                <?php if($_SESSION['user_group_name'] == "SUPER_ADMIN" || $_SESSION['user_group_name'] == 'CUSTOMER_ADMIN_TESTING_USE')
-                {
-                  ?>
-                  if(element2 == 'Processed')
-                  {
-                    element += '<button id="delete_btn" type="button"  title="REMOVE" class="btn btn-xs btn-danger" inv_guid="'+row['inv_guid']+'" invoice_number="'+row['invoice_number']+'" supplier_guid="'+row['biller_guid']+'" ><i class="fa fa-trash"></i></button><button id="view_btn" type="button" style="margin-right:5px;" title="VIEW" class="btn btn-xs btn-info view" inv_guid="'+row['inv_guid']+'" invoice_number="'+row['invoice_number']+'" supplier_guid="'+row['biller_guid']+'" file_status="'+row['file_status']+'" slip_created_at="'+row['slip_created_at']+'" slip_created_by="'+row['slip_created_by']+'"><i class="fa fa-eye"></i></button>';
-                  }
+            //     <?php if($_SESSION['user_group_name'] == "SUPER_ADMIN" || $_SESSION['user_group_name'] == 'CUSTOMER_ADMIN_TESTING_USE')
+            //     {
+            //       ?>
+            //       if(element2 == 'Processed')
+            //       {
+            //         element += '<button id="delete_btn" type="button"  title="REMOVE" class="btn btn-xs btn-danger" inv_guid="'+row['inv_guid']+'" invoice_number="'+row['invoice_number']+'" supplier_guid="'+row['biller_guid']+'" ><i class="fa fa-trash"></i></button><button id="view_btn" type="button" style="margin-right:5px;" title="VIEW" class="btn btn-xs btn-info view" inv_guid="'+row['inv_guid']+'" invoice_number="'+row['invoice_number']+'" supplier_guid="'+row['biller_guid']+'" file_status="'+row['file_status']+'" slip_created_at="'+row['slip_created_at']+'" slip_created_by="'+row['slip_created_by']+'"><i class="fa fa-eye"></i></button>';
+            //       }
 
-                  <?php
-                }
-                ?>
-              }
-              else
-              {
-                <?php if($_SESSION['user_group_name'] == "SUPER_ADMIN" || $_SESSION['user_group_name'] == 'CUSTOMER_ADMIN_TESTING_USE')
-                {
-                  ?>
-                  if(element2 == 'Processed')
-                  {
-                  element += '<button id="view_btn" type="button" style="margin-right:5px;" title="VIEW" class="btn btn-xs btn-info view" inv_guid="'+row['inv_guid']+'" invoice_number="'+row['invoice_number']+'" supplier_guid="'+row['biller_guid']+'" file_status="'+row['file_status']+'" slip_created_at="'+row['slip_created_at']+'" slip_created_by="'+row['slip_created_by']+'"><i class="fa fa-eye"></i></button>';
-                  }
+            //       <?php
+            //     }
+            //     ?>
+            //   }
+            //   else
+            //   {
+            //     <?php if($_SESSION['user_group_name'] == "SUPER_ADMIN" || $_SESSION['user_group_name'] == 'CUSTOMER_ADMIN_TESTING_USE')
+            //     {
+            //       ?>
+            //       if(element2 == 'Processed')
+            //       {
+            //       element += '<button id="view_btn" type="button" style="margin-right:5px;" title="VIEW" class="btn btn-xs btn-info view" inv_guid="'+row['inv_guid']+'" invoice_number="'+row['invoice_number']+'" supplier_guid="'+row['biller_guid']+'" file_status="'+row['file_status']+'" slip_created_at="'+row['slip_created_at']+'" slip_created_by="'+row['slip_created_by']+'"><i class="fa fa-eye"></i></button>';
+            //       }
 
-                  <?php
-                }
-                ?>
-              }
+            //       <?php
+            //     }
+            //     ?>
+            //   }
 
-              return element;
+            //   return element;
        
-            }},
-            { "data" : "sorting" },
+            // }},
+            // { "data" : "sorting" },
           ],
           //dom: "<'row'<'col-sm-4'l><'col-sm-8'f>>rtip",  
           dom: "<'row'<'col-sm-4'l>" + "<'col-sm-8'f>>" +'Brtip',
           buttons: [
           { extend: 'excelHtml5',
-            exportOptions: {columns: [0,1,2,3,4,5,6,7]} /*, footer: true */},
+            exportOptions: {columns: [0,1,2,3,4]} /*, footer: true */},
 
           { extend: 'csvHtml5',  
-            exportOptions: {columns: [0,1,2,3,4,5,6,7]} /*, footer: true*/ },
+            exportOptions: {columns: [0,1,2,3,4]} /*, footer: true*/ },
             ],
         "fnCreatedRow": function( nRow, aData, iDataIndex ) {
             // $(nRow).closest('tr').css({"cursor": "pointer"});

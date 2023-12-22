@@ -21,7 +21,7 @@ class b2b_pci extends CI_Controller
 
     public function index()
     {
-        if($this->session->userdata('loginuser') == true && $this->session->userdata('userid') != '' && $_SESSION['user_logs'] == $this->panda->validate_login() && $_SESSION['user_group_name'] == 'SUPER_ADMIN')
+        if($this->session->userdata('loginuser') == true && $this->session->userdata('userid') != '' && $_SESSION['user_logs'] == $this->panda->validate_login())
         {   
             //print_r($_SESSION['from_other']); die;
             $setsession = array(
@@ -64,7 +64,7 @@ class b2b_pci extends CI_Controller
 
     public function pci_list()
     {
-        if ($this->session->userdata('loginuser') == true && $this->session->userdata('userid') != '' && $_SESSION['user_logs'] == $this->panda->validate_login() && $_SESSION['user_group_name'] == 'SUPER_ADMIN') {
+        if ($this->session->userdata('loginuser') == true && $this->session->userdata('userid') != '' && $_SESSION['user_logs'] == $this->panda->validate_login()) {
             $check_loc = $_SESSION['pci_loc'];
             
             $hq_branch_code = $this->db->query("SELECT branch_code FROM acc_branch WHERE is_hq = '1'")->result();
@@ -135,7 +135,7 @@ class b2b_pci extends CI_Controller
             }
 
             if ($status == '') {
-                $status_in = " AND b.status = '' ";
+                $status_in = " AND a.status = '' ";
             } elseif ($status == 'ALL') {
                 $get_stat = $this->db->query("SELECT code from set_setting where module_name = 'PO_FILTER_STATUS'");
 
@@ -147,9 +147,9 @@ class b2b_pci extends CI_Controller
                     $value = "'" . trim($value) . "'";
                 }
                 $check_status = implode(',', array_filter($check_stat));
-                $status_in = " AND b.status IN ($check_status) ";
+                $status_in = " AND a.status IN ($check_status) ";
             } else {
-                $status_in = " AND b.status = '$status' ";
+                $status_in = " AND a.status = '$status' ";
             }
 
             if ($datefrom == '' || $dateto == '') {
@@ -175,9 +175,6 @@ class b2b_pci extends CI_Controller
             IF(a.status = '', 'NEW', a.status) AS status
             FROM
             b2b_summary.promo_taxinv_info AS a
-            LEFT JOIN b2b_summary.promo_taxinv AS b
-            ON a.taxinv_guid = b.taxinv_guid
-            AND a.customer_guid = b.customer_guid
             WHERE a.customer_guid =  '" . $_SESSION['customer_guid'] . "' 
             AND a.loc_group in ($loc)
                 $module_code_in 
@@ -202,9 +199,6 @@ class b2b_pci extends CI_Controller
             IF(a.status = '', 'NEW', a.status) AS status
             FROM
             b2b_summary.promo_taxinv_info AS a
-            LEFT JOIN b2b_summary.promo_taxinv AS b
-            ON a.taxinv_guid = b.taxinv_guid
-            AND a.customer_guid = b.customer_guid
             WHERE a.customer_guid =  '" . $_SESSION['customer_guid'] . "' 
             AND a.loc_group in ($loc)
                 $module_code_in 
@@ -220,7 +214,7 @@ class b2b_pci extends CI_Controller
             ) zzz ";
 
             $query = $this->Datatable_model->datatable_main($sql, $type, $doc);
-            //echo $this->db->last_query(); die;
+            // echo $this->db->last_query(); die;
             $fetch_data = $query->result();
             $data = array();
             if (count($fetch_data) > 0) {

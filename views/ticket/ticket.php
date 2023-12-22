@@ -281,10 +281,33 @@
                 <form action="" method="" id="form" class="form-horizontal">
                       <div class="form-body">
                         <input type="hidden" name="ticket_guid" id="ticket_guid" value="">
+
+                        <div class="form-group">
+                        <label class="control-label col-md-3">Retailer Name<span style="color:red">*</span> </label>
+                            <div class="col-md-9">
+                                <select id="retainer_category" name="retainer_category" class="form-control">
+                                <?php foreach($retailer_name->result() as $row) { ?>
+                                    <option value=<?php echo $row->acc_guid; ?>><?php echo $row->acc_name ?></option>
+                                <?php } ?>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                        <label class="control-label col-md-3">Supplier Name<span style="color:red">*</span> </label>
+                            <div class="col-md-9">
+                                <select id="supplier_category" name="supplier_category" class="form-control select2" style="width: 420px;">
+                                <?php foreach($supplier_name->result() as $row) { ?>
+                                    <option value=<?php echo $row->supplier_guid; ?>><?php echo $row->supplier_name ?></option>
+                                <?php } ?>
+                                </select>
+                            </div>
+                        </div>
+                        
                         <div class="form-group">
                         <label class="control-label col-md-3">Category<span style="color:red">*</span> </label>
                             <div class="col-md-9">
-                                <select id="ticket_category" name="ticket_category" class="form-control">
+                                <select id="ticket_category" name="ticket_category" class="form-control select2" style="width: 420px;">
                                 <?php foreach($category->result() as $row) { ?>
                                     <option value=<?php echo $row->t_topic_guid; ?>><?php echo $row->name ?></option>
                                 <?php } ?>
@@ -322,21 +345,97 @@ $(document).ready(function(){
     var ticket_guid = $(this).attr('ticket_guid');
     var category_guid = $(this).attr('category_guid');
     var sub_category = $(this).attr('sub_category_guid');
+    var supplier_name = $(this).attr('supplier_guid');
+    var retailer_name = $(this).attr('retailer_guid');
 
     $('#ticket_guid').val(ticket_guid);
     $('#ticket_category').val(category_guid);
     $('#ticket_sub_category').val(sub_category);
+    $('#retainer_category').val(retailer_name);
+    // $('#supplier_category').val(supplier_name).trigger('change');
+    $('#supplier_category').val(supplier_name);
+    $('#supplier_category').select2();
+    $('#ticket_category').select2();
+
+    $('#ticket_category').change(function() {
+      var selectedCategory = $(this).val();
+      console.log('Selected Category:', selectedCategory);
+
+      if (selectedCategory !== '') {
+        $.ajax({
+          url: "<?php echo site_url('Ticket/fetch_subtopic'); ?>",
+          method: "POST",
+          data: {
+            type_val: selectedCategory
+          },
+          success: function (result) {
+            var subtopicSelect = $('#ticket_sub_category');
+            var json = JSON.parse(result);
+
+            var subtopicOptions = '<option value="" disabled selected readonly>-Select-</option>';
+
+            if (json.subtopic.length > 0) {
+              $.each(json.subtopic, function (key, value) {
+                subtopicOptions += '<option value="' + value.t_sub_topic_guid + '">' + value.name + '</option>';
+              });
+            } else {
+              subtopicOptions += '<option value="" disabled>No sub-categories available</option>';
+            }
+
+            subtopicSelect.empty().html(subtopicOptions);     
+          }
+        });
+      }
+
+    });
+
+    if (category_guid !== '') {
+      $.ajax({
+        url: "<?php echo site_url('Ticket/fetch_subtopic'); ?>",
+        method: "POST",
+        data: {
+          type_val: category_guid
+        },
+        success: function (result) {
+          var subtopicSelect = $('#ticket_sub_category');
+          var json = JSON.parse(result);
+
+          var subtopicOptions = '';
+
+          if (json.subtopic.length > 0) {
+            $.each(json.subtopic, function (key, value) {
+              subtopicOptions += '<option value="' + value.t_sub_topic_guid + '">' + value.name + '</option>';
+            });
+          } else {
+            subtopicOptions += '<option value="" disabled>No sub-categories available</option>';
+          }
+
+          subtopicSelect.empty().html(subtopicOptions);
+
+          // Set the selected sub-category based on its actual value
+          if (sub_category) {
+            subtopicSelect.val(sub_category).trigger('change');
+          }
+          
+        }
+      });
+    } else {
+      // Clear the sub-category dropdown without adding the default "-Select-" option
+      $('#ticket_sub_category').empty();
+    }
   });
 
-  $(document).on('click','#edit_ticket_save',function(){
+  $(document).on('click','#old_edit_ticket_save',function(){
     var ticket_guid = $('#ticket_guid').val();
     var category_guid = $('#ticket_category').val();
     var sub_category = $('#ticket_sub_category').val();
+    var retailer_name = $('#retainer_category').val();
+    var supplier_name = $('#supplier_category').val();
     // alert(ticket_guid+' - '+category_guid+' - '+sub_category);die;
     $.ajax({
           url:"<?php echo site_url('Ticket/edit_ticket'); ?>",
           method:"POST",
-          data:{ticket_guid:ticket_guid,category_guid:category_guid,sub_category:sub_category},
+          data:{ticket_guid:ticket_guid,category_guid:category_guid,sub_category:sub_category,retailer_name:retailer_name,supplier_name:supplier_name},
           success:function(data){
             if(data > 0)
             {
@@ -351,6 +450,44 @@ $(document).ready(function(){
           }
     });
 
+  });
+
+  $(document).on('click', '#edit_ticket_save', function () {
+    var subCategoryDropdown = $('#ticket_sub_category');
+    var selectedSubCategory = subCategoryDropdown.val();
+    
+    if (selectedSubCategory == ''|| selectedSubCategory == null ) {
+        alert('Please select a sub-category.');
+        return; // Prevent form submission if no sub-category is selected
+    }
+
+    // If a sub-category is selected, proceed with saving the form
+    var ticket_guid = $('#ticket_guid').val();
+    var category_guid = $('#ticket_category').val();
+    var sub_category = selectedSubCategory;
+    var retailer_name = $('#retainer_category').val();
+    var supplier_name = $('#supplier_category').val();
+
+    $.ajax({
+        url: "<?php echo site_url('Ticket/edit_ticket'); ?>",
+        method: "POST",
+        data: {
+            ticket_guid: ticket_guid,
+            category_guid: category_guid,
+            sub_category: sub_category,
+            retailer_name: retailer_name,
+            supplier_name: supplier_name
+        },
+        success: function (data) {
+            if (data > 0) {
+                alert('Record Updated.');
+                $('#edit_ticket_modal').modal('hide');
+                $('#list').DataTable().ajax.reload();
+            } else {
+                alert('Record Not Updated!');
+            }
+        }
+    });
   });
 
   tablelist = function(ticket_status_value='')

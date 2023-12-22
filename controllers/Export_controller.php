@@ -414,7 +414,7 @@ class Export_controller extends CI_Controller
     public function direct_content()
     {
         //echo 1;die;
-        //print_r($_REQUEST); die;
+        // print_r($_REQUEST); die;
         $datefrom = $this->db->query("SELECT DATE_FORMAT('" . $_REQUEST['date_start'] . "','%Y-%m-%d') - INTERVAL 7 DAY as datefrom")->row('datefrom');
         $dateto = $_REQUEST['date_start'];
         $report_id = $_REQUEST['report_id']; //YWFmNzEyMGYtOQ
@@ -422,6 +422,8 @@ class Export_controller extends CI_Controller
 
         $check_excel_query = $this->db->query("SELECT * from set_report_query where report_id = '$report_id'");
         $check_schedule_type = $this->db->query("SELECT * from set_report_schedule where report_guid = '" . $check_excel_query->row('report_guid') . "'");
+
+        // echo $this->db->last_query(); die;
         $q_result2_show = 0; // strb
         $q_result3_show = 0; // e-inv
 
@@ -618,17 +620,21 @@ class Export_controller extends CI_Controller
                             $einv_grab_date = $row->einv_grab_date;
 
                             // echo $interval_setting_day;die;
-                            $table2 = 'grmain';
+                            $table2 = 'grmain_info';
 
                             $q_result3 = $this->db->query("SELECT 
                                 f.acc_name, 
-                                a.*, 
+                                a.refno,
+                                a.GRDate,
+                                a.supplier_code,
+                                a.supplier_name,
+                                a.loc_group,
                                 DATE_ADD(a.grdate, INTERVAL $first_notification_setting_day DAY) AS after_interval, 
                                 'Reminder' AS TYPE 
                             FROM 
-                                b2b_summary.grmain a 
+                                b2b_summary.$table2 a 
                                 INNER JOIN lite_b2b.set_supplier_group b ON a.customer_guid = b.customer_guid 
-                                AND a.code = b.supplier_group_name 
+                                AND a.supplier_code = b.supplier_group_name 
                                 INNER JOIN lite_b2b.set_supplier_user_relationship c ON b.supplier_group_guid = c.supplier_group_guid 
                                 AND b.customer_guid = c.customer_guid 
                                 AND c.user_guid = '$user_guid' 
@@ -645,13 +651,17 @@ class Export_controller extends CI_Controller
                             UNION ALL 
                             SELECT 
                                 f.acc_name, 
-                                a.*, 
+                                a.refno,
+                                a.GRDate,
+                                a.supplier_code,
+                                a.supplier_name,
+                                a.loc_group,
                                 DATE_ADD(a.grdate, INTERVAL $second_notification_setting_day DAY) AS after_interval, 
                                 'Last Reminder' AS TYPE 
                             FROM 
-                                b2b_summary.grmain a 
+                                b2b_summary.$table2 a 
                                 INNER JOIN lite_b2b.set_supplier_group b ON a.customer_guid = b.customer_guid 
-                                AND a.code = b.supplier_group_name 
+                                AND a.supplier_code = b.supplier_group_name 
                                 INNER JOIN lite_b2b.set_supplier_user_relationship c ON b.supplier_group_guid = c.supplier_group_guid 
                                 AND b.customer_guid = c.customer_guid 
                                 AND c.user_guid = '$user_guid' 
@@ -667,15 +677,15 @@ class Export_controller extends CI_Controller
                                 AND a.status IN ('', 'viewed')                        
                             ");
 
-                            //echo $this->db->last_query();die;
+                            // echo $this->db->last_query();die;
                             if ($q_result3->num_rows() > 0) {
                                 foreach ($q_result3->result() as $einv) {
                                     $einv_main_loop[] = array(
                                         'acc_name' => $einv->acc_name,
-                                        'gr_refno' => $einv->RefNo,
+                                        'gr_refno' => $einv->refno,
                                         'doc_date' => $einv->GRDate,
-                                        'sup_code' => $einv->Code,
-                                        'sup_name' => $einv->Name,
+                                        'sup_code' => $einv->supplier_code,
+                                        'sup_name' => $einv->supplier_name,
                                         'loc_group' => $einv->loc_group,
                                         'TYPE' => $einv->TYPE,
                                     );

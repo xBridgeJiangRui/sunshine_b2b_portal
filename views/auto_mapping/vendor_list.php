@@ -38,6 +38,24 @@
 <br>
 
   <div class="row">
+    <div class="col-md-12" >
+      <?php if(in_array('IAVA',$this->session->userdata('module_code')))
+      {
+        foreach($get_new_status->result() as $key)
+        {
+          ?>
+          <a class="btn btn-app" <?php if($customer_guid == $key->acc_guid){ ?> style="background-color:#4da6ff;font-weight: bold;" <?php }?>>
+            <span class="badge bg-red" style="font-size: 16px">
+              <?php echo $key->numbering ?> 
+            </span>
+            <i class="fa fa-address-card-o" ></i> 
+            <span style="font-size: 12px;color:black;"> <?php echo $key->acc_name ?> </span>
+          </a> 
+          <?php
+        }
+      }
+      ?>
+    </div>
     <div class="col-md-12 col-xs-12">
       <div class="box">
         <div class="box-header with-border">

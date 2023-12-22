@@ -210,7 +210,7 @@ class Troubleshoot_po extends CI_Controller
         }//close expiry_from
         else
         {
-            $expiry_from = "AND a.DueDate BETWEEN '$expiry_from' AND '$expiry_to'";
+            $expiry_from = "AND a.expiry_date BETWEEN '$expiry_from' AND '$expiry_to'";
         }//close else expiry_from
 
 
@@ -233,7 +233,10 @@ class Troubleshoot_po extends CI_Controller
             $po_status = "WHERE a.status = '$po_status'";
         }//close else po_status
 
-        $sql = "SELECT a.RefNo,b.gr_refno,a.loc_group,a.SCode,a.SName,a.PODate,a.DeliverDate,a.DueDate,a.Total,a.gst_tax_sum,a.total_include_tax,a.status,c.portal_description,a.expiry_date FROM b2b_summary.pomain a LEFT JOIN b2b_summary.po_grn_inv b ON a.RefNo = b.po_refno AND a.customer_guid = b.customer_guid LEFT JOIN status_setting c ON a.rejected_remark = c.code AND c.type = 'reject_po' $po_status AND a.customer_guid = '$customer_guid' AND a.SCode IN($vendor_code) $po_num $daterange $expiry_from $period_code ";
+        $sql = "SELECT a.RefNo,b.gr_refno,a.loc_group,a.SCode,a.SName,a.PODate,a.DeliverDate,a.DueDate,a.Total,a.gst_tax_sum,a.total_include_tax,c.portal_description,a.expiry_date,CASE 
+        WHEN a.status = '' THEN 'New' 
+        ELSE a.status 
+        END AS status FROM b2b_summary.pomain a LEFT JOIN b2b_summary.po_grn_inv b ON a.RefNo = b.po_refno AND a.customer_guid = b.customer_guid LEFT JOIN status_setting c ON a.rejected_remark = c.code AND c.type = 'reject_po' $po_status AND a.customer_guid = '$customer_guid' AND a.SCode IN($vendor_code) $po_num $daterange $expiry_from $period_code  ";
 
         $query = "SELECT * FROM (".$sql.") a ".$like_first_query.$like_second_query.$order_query.$limit_query;
 
@@ -262,21 +265,23 @@ class Troubleshoot_po extends CI_Controller
         {   
             $refno = $row->RefNo;
 
-            $check_scode = $this->db->query("SELECT Scode from b2b_summary.pomain where refno = '$refno' and customer_guid = '$customer_guid' ")->row('Scode');
+            // $check_scode = $this->db->query("SELECT Scode from b2b_summary.pomain where refno = '$refno' and customer_guid = '$customer_guid' ")->row('Scode');
 
-            $parameter = $this->db->query("SELECT * from menu where module_link = 'panda_po_2'");
+            // $parameter = $this->db->query("SELECT * from menu where module_link = 'panda_po_2'");
 
-            $type = $parameter->row('type');
-            $code = $check_scode;
-            // echo $code;
+            // $type = $parameter->row('type');
+            // $code = $check_scode;
+            // // echo $code;
 
-            $replace_var = $this->db->query("SELECT REPLACE(REPLACE(REPLACE(filename_format, 'type', '$type'), 'code', REPLACE('$code','/','+-+')), 'refno' , '$refno') AS query FROM menu where module_link = 'panda_po_2'")->row('query');
+            // $replace_var = $this->db->query("SELECT REPLACE(REPLACE(REPLACE(filename_format, 'type', '$type'), 'code', REPLACE('$code','/','+-+')), 'refno' , '$refno') AS query FROM menu where module_link = 'panda_po_2'")->row('query');
             // echo $replace_var;
 
-            $virtual_path = $this->db->query("SELECT CONCAT(file_host,file_path) AS full_path FROM lite_b2b.acc WHERE acc_guid = '$customer_guid' ")->row('full_path');
+            //$virtual_path = $this->db->query("SELECT file_path FROM acc WHERE acc_guid = '$customer_guid' ")->row('file_path');
+
+            $filename = site_url('B2b_po/po_report?refno='.$refno);
            
             //$filename = base_url($virtual_path.'/'.$replace_var.'.pdf');
-            $filename = $virtual_path.'/'.$replace_var.'.pdf';
+            //$filename = $virtual_path.'/'.$replace_var.'.pdf';
 
             $nestedData['RefNo'] = $row->RefNo;
             $nestedData['gr_refno'] = $row->gr_refno;

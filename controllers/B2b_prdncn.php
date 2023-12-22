@@ -139,7 +139,7 @@ class b2b_prdncn extends CI_Controller
             } elseif ($status == 'READ') {
                 $status_in = " WHERE a.type IN ('','DEBIT','CN') AND a.`status` IN ('printed', 'viewed') ";
             } elseif ($status == 'UNREAD') {
-                $status_in = " WHERE a.type IN ('','DEBIT','CN') ";
+                $status_in = " WHERE a.type IN ('','DEBIT','CN') AND a.`status` IN ('','NEW') ";
             } elseif ($status == 'ALL') {
                 $get_stat = $this->db->query("SELECT code from set_setting where module_name = 'PRDNCN_FILTER_STATUS'");
 

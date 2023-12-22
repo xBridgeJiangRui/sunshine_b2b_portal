@@ -1,3 +1,14 @@
+<style>
+/* Adjust the z-index values as needed */
+.popover {
+  z-index: 2000; /* Set a higher z-index value for the Summernote popover */
+}
+
+#chat_box {
+  z-index: 1200; /* Set a lower z-index value for the chat_box container */
+}
+</style>
+
 <footer class="main-footer" style="background: transparent linear-gradient(180deg, #FD8B29 0%, #F96327 100%) 0% 0% no-repeat padding-box;color:white;">
     <!-- <div class="pull-right hidden-xs">
       Policy:&nbsp;<a href="https://b2b.xbridge.my/admin_files/Privacy%20Policy%20(ENGLISH).pdf" target="_blank">(EN)</a> <a href="https://b2b.xbridge.my/admin_files/Privacy%20Policy%20(BM).pdf" target="_blank">(BM)</a>&nbsp;<span data-toggle="modal" data-target="#contactus"><b style="cursor:pointer">Contact Us</b></span>  &nbsp<img src="<?php echo base_url('asset/dist/img_sunshine/icon-512.png');?>" class="img-circle" alt="User Image" style="height: 32px">
@@ -245,7 +256,7 @@ else
       <?php if ($_SESSION['user_group_name'] == 'SUPER_ADMIN') { ?>
 
       <label for="topic_guid">Staff(Admin)</label>
-      <select class="form-control" name="assigned_guid" id="assigned_guid" required >
+      <select class="form-control" name="assigned_guid" id="assigned_guid" >
         <option value="">-Select-</option>
         <?php foreach ($get_query_admin_user as $key) { ?>
           <option value="<?php echo $key->user_guid ?>"><?php echo $key->user_name .'-'.$key->user_id ?></option>
@@ -2043,17 +2054,8 @@ $(document).ready(function () {
               { "data": "name" },
               { "data": "sup_name" },
               { "data": "reg_no" },
+              { "data": "supply_type" },  
               { "data": "block" },
-              { "data": "remark1" ,render: function (data, type , row){
-
-              var element = '';
-              var element1 = data.split("]").join("]</b><br/>").split("[").join("<br><b>[");
-
-              element += '<span>'+element1.replace('<br>','')+'</span>';
-
-              return element;
-
-              }},
               { "data": "PIC" },
               { "data": "invoice_no" },
               //{ "data": "training_pax" },
@@ -2109,7 +2111,17 @@ $(document).ready(function () {
             //  },
             
             //   { "data": "STATUS" },  
-              { "data": "supply_type" },  
+            { "data": "remark1" ,render: function (data, type , row){
+
+              var element = '';
+              var element1 = data.split("]").join("]</b><br/>").split("[").join("<br><b>[");
+
+              element += '<span>'+element1.replace('<br>','')+'</span>';
+
+              return element;
+
+              }},
+                
               
            ],
             "columnDefs": [

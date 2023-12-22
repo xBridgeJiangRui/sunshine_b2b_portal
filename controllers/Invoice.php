@@ -251,6 +251,47 @@ class Invoice extends CI_Controller {
         curl_close($curl);             
     }//close ger_supplier_last_login    
 
+    public function view_report_cn()
+    {   
+        $inv_guid = $_REQUEST['inv_guid'];
+        $inv_no = $_REQUEST['inv_number'];
+        $url = $this->jasper_ip.'/jasperserver/rest_v2/reports/reports/B2BReports/Invoices_CN.pdf?db_be=b2b_invoice&inv_guid='.$inv_guid;
+        // echo $url;die;
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+          CURLOPT_URL => $url,
+          CURLOPT_RETURNTRANSFER => true,
+          CURLOPT_ENCODING => "",
+          CURLOPT_MAXREDIRS => 10,
+          CURLOPT_TIMEOUT => 0,
+          CURLOPT_FOLLOWLOCATION => true,
+          CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+          CURLOPT_CUSTOMREQUEST => "GET",
+          CURLOPT_SSL_VERIFYPEER => false,
+          CURLOPT_HTTPHEADER => array(
+            "Cache-Control: public",
+            "Authorization: Basic cGFuZGFfYjJiOmIyYkBhZG5hcA==",
+            "Cookie: userLocale=en_US; JSESSIONID=879B915DD28E3F45200A8EE4AB8C9247; ci_session=fd078d7476946360245b1455b22c0f843f46df74",
+          ),
+        ));
+
+        // if ($type == 'download') {
+        //     $disposition = 'attachment';
+        // } elseif($type == 'view') {
+        //     $disposition = 'inline';
+        // } else {
+        //     echo 'Variable type not found';die;
+        // }
+
+        $response = curl_exec($curl);
+        header('Content-type: ' . 'application/pdf');
+        header('Content-Disposition: ' .$disposition.'; filename=Invoice_'.$inv_no.'.pdf');
+        echo $response; 
+
+        curl_close($curl);             
+    }//close ger_supplier_last_login    
+
     public function view_report_term()
     {   
         $form_type = $_REQUEST['form_type'];
@@ -468,6 +509,141 @@ class Invoice extends CI_Controller {
         echo $response; 
 
         curl_close($curl);             
-    }//close ger_supplier_last_login   
+    }//close ger_supplier_last_login  
+    
+    public function einvoice_report()
+    {   
+      $customer_guid = $_REQUEST['customer_guid'];
+      $refno = $_REQUEST['refno'];
+
+      $filename = 'B2B_EINV_'.$refno;
+
+      $url = $this->jasper_ip.'/jasperserver/rest_v2/reports/reports/B2BReports/GRN_E_Invoice.pdf?db_b2b=b2b_summary&db_lite=lite_b2b&customer_guid='.$customer_guid.'&refno='.$refno;
+      // echo $url;die;
+      $curl = curl_init();
+
+      curl_setopt_array($curl, array(
+        CURLOPT_URL => $url,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => "",
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 0,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => "GET",
+        CURLOPT_HTTPHEADER => array(
+          "Cache-Control: public",
+          "Authorization: Basic cGFuZGFfYjJiOmIyYkBhZG5hcA==",
+          "Cookie: userLocale=en_US; JSESSIONID=879B915DD28E3F45200A8EE4AB8C9247; ci_session=fd078d7476946360245b1455b22c0f843f46df74",
+        ),
+      ));
+
+      // if ($type == 'download') {
+      //     $disposition = 'attachment';
+      // } elseif($type == 'view') {
+      //     $disposition = 'inline';
+      // } else {
+      //     echo 'Variable type not found';die;
+      // }
+
+      $response = curl_exec($curl);
+      header('Content-type: ' . 'application/pdf');
+      header('Content-Disposition: ' .$disposition.'; filename='.$filename.'.pdf');
+      echo $response; 
+
+      curl_close($curl);
+    }//close ger_supplier_last_login  
+
+    public function ecn_report()
+    {   
+      $customer_guid = $_REQUEST['customer_guid'];
+      $refno = $_REQUEST['refno'];
+      $trans_type = $_REQUEST['trans_type'];
+
+      $filename = 'B2B_ECN_'.$refno.'_'.$trans_type;
+
+      $url = $this->jasper_ip.'/jasperserver/rest_v2/reports/reports/B2BReports/GRDA_E_Invoice.pdf?db_b2b=b2b_summary&db_lite=lite_b2b&customer_guid='.$customer_guid.'&refno='.$refno.'&trans_type='.$trans_type;
+      // echo $url;die;
+      // http://192.168.8.243:59090 http://127.0.0.1:59090
+      $curl = curl_init();
+
+      curl_setopt_array($curl, array(
+        CURLOPT_URL => $url,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => "",
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 0,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => "GET",
+        CURLOPT_HTTPHEADER => array(
+          "Cache-Control: public",
+          "Authorization: Basic cGFuZGFfYjJiOmIyYkBhZG5hcA==",
+          "Cookie: userLocale=en_US; JSESSIONID=879B915DD28E3F45200A8EE4AB8C9247; ci_session=fd078d7476946360245b1455b22c0f843f46df74",
+        ),
+      ));
+
+      // if ($type == 'download') {
+      //     $disposition = 'attachment';
+      // } elseif($type == 'view') {
+      //     $disposition = 'inline';
+      // } else {
+      //     echo 'Variable type not found';die;
+      // }
+
+      $response = curl_exec($curl);
+      header('Content-type: ' . 'application/pdf');
+      header('Content-Disposition: ' .$disposition.'; filename='.$filename.'.pdf');
+      echo $response; 
+
+      curl_close($curl);     
+    }//close ger_supplier_last_login  
+
+    public function prdn_ecn_report()
+    {   
+      $customer_guid = $_REQUEST['customer_guid'];
+      $refno = $_REQUEST['refno'];
+
+      $filename = 'B2B_PRDN_ECN_'.$refno;
+
+      $url = $this->jasper_ip.'/jasperserver/rest_v2/reports/reports/B2BReports/PRDN_E_Invoice.pdf?db_b2b=b2b_summary&db_lite=lite_b2b&customer_guid='.$customer_guid.'&refno='.$refno;
+      // echo $url;die;
+
+      $curl = curl_init();
+
+      curl_setopt_array($curl, array(
+        CURLOPT_URL => $url,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => "",
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 0,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => "GET",
+        CURLOPT_HTTPHEADER => array(
+          "Cache-Control: public",
+          "Authorization: Basic cGFuZGFfYjJiOmIyYkBhZG5hcA==",
+          "Cookie: userLocale=en_US; JSESSIONID=879B915DD28E3F45200A8EE4AB8C9247; ci_session=fd078d7476946360245b1455b22c0f843f46df74",
+        ),
+      ));
+
+      // if ($type == 'download') {
+      //     $disposition = 'attachment';
+      // } elseif($type == 'view') {
+      //     $disposition = 'inline';
+      // } else {
+      //     echo 'Variable type not found';die;
+      // }
+
+      $response = curl_exec($curl);
+      header('Content-type: ' . 'application/pdf');
+      header('Content-Disposition: ' .$disposition.'; filename='.$filename.'.pdf');
+      echo $response; 
+
+      curl_close($curl);             
+    }//close ger_supplier_last_login
 }
 ?>

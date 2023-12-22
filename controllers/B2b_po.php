@@ -372,7 +372,7 @@ class b2b_po extends CI_Controller
             $check_status = $this->db->query("SELECT refno, if(status = '', 'Pending', status) as status from b2b_summary.pomain_info where refno = '$refno' and customer_guid = '".$_SESSION['customer_guid']."'");
 
             // $set_code = $this->db->query("SELECT code,reason from  set_setting where module_name = 'PO' order by reason asc");
-            $set_code = $this->db->query("SELECT code,portal_description as reason from status_setting where type = 'reject_po' AND isactive = 1 order by portal_description asc");
+            $set_code = $this->db->query("SELECT code,portal_description as reason from status_setting where type = 'reject_po' AND isactive = 1 order by sort asc");
             $set_admin_code = $this->db->query("SELECT code,reason from  set_setting where module_name = 'ADMIN' order by reason asc");
 
             $subscribe_edi = $this->db->query("SELECT b.subscribe_edi
@@ -434,12 +434,16 @@ class b2b_po extends CI_Controller
                 $hide_url = '';
             }
 
-            $get_current_settings = $this->db->query("SELECT * FROM lite_b2b.acc_settings WHERE customer_guid = '$customer_guid'");
+            $hide_report_toolbar = 0;
+            if(!in_array($check_status->row('status'), ['Accepted','gr_completed'])){
+                $get_current_settings = $this->db->query("SELECT * FROM lite_b2b.acc_settings WHERE customer_guid = '$customer_guid'");
 
-            if(!in_array($check_status->row('status'), ['Accepted','gr_completed']) && $get_current_settings->row('supplier_mandatory_to_accept_po') == 1){
-                $hide_report_toolbar = 1;
-            }else{
-                $hide_report_toolbar = 0;
+                // $check_movement = $this->db->query("SELECT COUNT(*) AS `count` FROM lite_b2b.supplier_movement WHERE `value` = '$refno' and customer_guid = '".$customer_guid."' and action = 'accepted_po'")->row('count');
+
+                if($get_current_settings->row('supplier_mandatory_to_accept_po') == 1){
+                    $hide_report_toolbar = 1;
+                }
+
             }
 
             $data = array(
@@ -917,9 +921,14 @@ class b2b_po extends CI_Controller
         {
             $check_status = $this->db->query("SELECT refno, if(status = '', 'Pending', status) as status from b2b_summary.pomain_info where refno = '$row' and customer_guid = '".$customer_guid."'");
 
-            if(!in_array($check_status->row('status'), ['Accepted','gr_completed']) && $get_current_settings->row('supplier_mandatory_to_accept_po') == 1){
-                echo 0;
-                die;
+            if(!in_array($check_status->row('status'), ['Accepted','gr_completed'])){
+
+                // $check_movement = $this->db->query("SELECT COUNT(*) AS `count` FROM lite_b2b.supplier_movement WHERE `value` = '$row' and customer_guid = '".$customer_guid."' and action = 'accepted_po'")->row('count');
+
+                if($get_current_settings->row('supplier_mandatory_to_accept_po') == 1){
+                    echo 0;
+                    die;
+                }
             }
         }
 
@@ -991,6 +1000,9 @@ class b2b_po extends CI_Controller
 
     public function po_report()
     {
+        $refno = $_REQUEST['refno'];
+        //$customer_guid = $_SESSION['customer_guid'];
+
         $get_status = $this->db->query("SELECT `status` FROM lite_b2b.jasper_server WHERE isactive = '1'")->row('status');
 
         if($get_status == '0')
@@ -998,10 +1010,6 @@ class b2b_po extends CI_Controller
             print_r('Report Under Maintenance.'); 
             die;
         }
-        
-        $user_guid = $_SESSION['user_guid'];
-        $refno = $_REQUEST['refno'];
-        //$customer_guid = $_SESSION['customer_guid'];
 
         $url = $this->jasper_ip . "/jasperserver/rest_v2/reports/reports/PandaReports/Backend_PO/main_jrxml.pdf?refno=".$refno; // po
         //$url = "http://127.0.0.1:59090/jasperserver/rest_v2/reports/reports/PandaReports/Backend_GRN/gr_supplier_copy.pdf?refno=BLPGR22030862"; // grn

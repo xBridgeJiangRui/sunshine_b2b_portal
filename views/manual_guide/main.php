@@ -35,7 +35,6 @@
 
                 <?php foreach ($manual_guide->result() as $value) { ?>
                   <li>
-                    <!-- <h5><a href="<?php echo base_url('asset/manual_guide'.$path.'/').$value->file_name;?>" download="<?php echo $value->file_name;?>" ><?php echo $value->title;?></a></h5> -->
                     <h5><a href="<?php echo $defined_path.'/'.$value->file_name;?>" download="<?php echo $value->file_name;?>" ><?php echo $value->title;?></a></h5>
                     <div class="faded" style="margin:10px 0">
                     <?php echo $value->description ?></div>
@@ -83,65 +82,43 @@
 
 <script type="text/javascript">
   
-$(document).ready(function () {  
+  $(document).ready(function () {  
 
-  $(document).on('change', '#lang', function(){
+    $(document).on('change', '#lang', function(){
 
-    $('input[name="search_value"]').val('');
+      $('input[name="search_value"]').val('');
+      language_type = $('#lang').val();
 
-    language_type = $('#lang').val();
+      $.ajax({
+        url : "<?php echo site_url('Manual_guide/change_language?lt='); ?>" + language_type,
+        success : function(result){
+          result = JSON.parse(result);
+          html = '';
 
-    $.ajax({
-      url : "<?php echo site_url('Manual_guide/change_language?lt='); ?>" + language_type,
-      beforeSend : function() {
+          if (result['manual_guide'].length != 0){
 
-      },
-      complete: function() {
+            for(i = 0; i < result['manual_guide'].length; i++){
 
-        },
+              html += '<li>';
+              html += '<h5><a href="<?php echo $defined_path.'/'?>'+result['manual_guide'][i].file_name+' " download="'+result['manual_guide'][i].file_name+'" >'+result['manual_guide'][i].title+'</a></h5>';
+              html += '<div class="faded" style="margin:10px 0"> '+result['manual_guide'][i].description+'</div>';
+              html += '</li>';
+              html += '<hr>';
 
-      success : function(result){
-        
-        result = JSON.parse(result);
+            }
 
-        html = '';
+          } else {
 
-        if (result['manual_guide'].length != 0) {
+            html += 'Coming soon...';
 
-        for(i = 0; i < result['manual_guide'].length; i++)
+          } 
 
-        {
-
-          html += '<li>';
-
-          // html += '<h5><a href="<?php echo base_url('asset/manual_guide')?>'+result['path']+'/'+result['manual_guide'][i].file_name+' " download="'+result['manual_guide'][i].file_name+'" >'+result['manual_guide'][i].title+'</a></h5>';
-
-          html += '<h5><a href="<?php echo $defined_path ?>'+'/'+result['manual_guide'][i].file_name+' " download="'+result['manual_guide'][i].file_name+'" >'+result['manual_guide'][i].title+'</a></h5>';
-
-
-          html += '<div class="faded" style="margin:10px 0"> '+result['manual_guide'][i].description+'</div>';
-
-          html += '</li>';
-
-          html += '<hr>';
+          $('#details-wrap ul').html(html);
 
         }
-
-        } else {
-
-          html += 'Coming soon...';
-
-        }
-                 
-
-        $('#details-wrap ul').html(html);
-
-
-      }
-
+      })
     })
 
   })
-})
 
 </script>

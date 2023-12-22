@@ -15,7 +15,7 @@ class Supplier_setup_vendor extends CI_Controller
     //$this->load->library(array('session'));
     $this->load->library('session');
     //$this->load->helper('html');
-    $this->api_url = 'https://api.xbridge.my';
+    $this->api_url = 'http://20.212.51.33';
   }
 
   public function index()
@@ -23,10 +23,17 @@ class Supplier_setup_vendor extends CI_Controller
     if($this->session->userdata('loginuser') == true && $this->session->userdata('userid') != '' && $_SESSION['user_logs'] == $this->panda->validate_login())
     {
         $customer_guid = $_SESSION['customer_guid'];
+        $get_new_status = $this->db->query("SELECT b.`acc_guid`,b.`acc_name`, COUNT(b.`acc_name`) 
+        AS numbering,IF(b.acc_guid = '$customer_guid' ,'1','2') AS sort FROM 
+        lite_b2b.tmp_auto_mapping a INNER JOIN lite_b2b.acc b ON a.`customer_guid` 
+        = b.acc_guid WHERE a.pending = '1' GROUP BY a.`customer_guid` 
+        ORDER BY sort ASC , b.acc_name ASC");
 
         $data = array(
-
+          'get_new_status' => $get_new_status,
+          'customer_guid' => $customer_guid,
         );
+        
         $this->load->view('header');
         $this->load->view('auto_mapping/vendor_list', $data);  
         $this->load->view('footer');
@@ -178,7 +185,7 @@ class Supplier_setup_vendor extends CI_Controller
 
     $url = $this->api_url;
 
-    $to_shoot_url = "https://api.xbridge.my/rest_b2b/index.php/Auto_mapping_vendor_code/flag_auto_vendor_code_status";
+    $to_shoot_url = "http://20.212.51.33/rest_b2b/index.php/Auto_mapping_vendor_code/flag_auto_vendor_code_status";
 
     //echo $to_shoot_url;die;
     $data = array();
@@ -251,7 +258,7 @@ class Supplier_setup_vendor extends CI_Controller
     
     $url = $this->api_url;
     //get method
-    $to_shoot_url = "https://api.xbridge.my/rest_b2b/index.php/Auto_mapping_vendor_code/auto_mapping_v3";
+    $to_shoot_url = "http://20.212.51.33/rest_b2b/index.php/Auto_mapping_vendor_code/auto_mapping_v3";
 
     //echo $to_shoot_url;die;
     $data = array();
